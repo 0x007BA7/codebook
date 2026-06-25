@@ -1,0 +1,223 @@
+{
+  "clusters": [
+    {
+      "cycleRel": "circular imports",
+      "entityIds": [
+        "src/s.ts::s",
+        "src/t.ts::t"
+      ],
+      "index": 0,
+      "isCycle": true
+    },
+    {
+      "cycleRel": "mutual recursion",
+      "entityIds": [
+        "src/p.ts::p",
+        "src/q.ts::q",
+        "src/r.ts::r"
+      ],
+      "index": 1,
+      "isCycle": true
+    },
+    {
+      "entityIds": [
+        "src/u.ts::u"
+      ],
+      "index": 2,
+      "isCycle": false
+    }
+  ],
+  "pr": {
+    "base": "main",
+    "head": "feat/nested",
+    "repo": "example/nested"
+  },
+  "schemaVersion": 1,
+  "stats": {
+    "backwardEdges": 0,
+    "clusterCount": 3,
+    "cycleCount": 2,
+    "edgeCount": 7,
+    "entityCount": 6,
+    "maxClusterSize": 3,
+    "totalAdded": 46,
+    "totalRemoved": 4
+  },
+  "steps": [
+    {
+      "clusterIndex": 0,
+      "dependents": [
+        "src/t.ts::t",
+        "src/r.ts::r"
+      ],
+      "dependsOn": [],
+      "entity": {
+        "category": "logic",
+        "change": "modified",
+        "file": "src/s.ts",
+        "hunks": [
+          {
+            "added": 5,
+            "endLine": 10,
+            "file": "src/s.ts",
+            "patch": "-import { t } from './t';\n+import { t } from './t';   // s <-> t circular import\n+export const s = () => t();",
+            "removed": 2,
+            "startLine": 1
+          }
+        ],
+        "id": "src/s.ts::s",
+        "kind": "function",
+        "name": "s"
+      },
+      "order": 1,
+      "recursiveDependents": 5,
+      "recursiveDeps": 1
+    },
+    {
+      "clusterIndex": 0,
+      "dependents": [
+        "src/s.ts::s"
+      ],
+      "dependsOn": [
+        "src/s.ts::s"
+      ],
+      "entity": {
+        "category": "logic",
+        "change": "modified",
+        "file": "src/t.ts",
+        "hunks": [
+          {
+            "added": 5,
+            "endLine": 10,
+            "file": "src/t.ts",
+            "patch": "-import { s } from './s';\n+import { s } from './s';   // t <-> s circular import\n+export const t = () => s();",
+            "removed": 2,
+            "startLine": 1
+          }
+        ],
+        "id": "src/t.ts::t",
+        "kind": "function",
+        "name": "t"
+      },
+      "order": 2,
+      "recursiveDependents": 5,
+      "recursiveDeps": 1
+    },
+    {
+      "clusterIndex": 1,
+      "dependents": [
+        "src/r.ts::r",
+        "src/u.ts::u"
+      ],
+      "dependsOn": [],
+      "entity": {
+        "category": "logic",
+        "change": "added",
+        "file": "src/p.ts",
+        "hunks": [
+          {
+            "added": 10,
+            "endLine": 10,
+            "file": "src/p.ts",
+            "patch": "+export function p() {\n+  return q();   // p -> q\n+}",
+            "removed": 0,
+            "startLine": 1
+          }
+        ],
+        "id": "src/p.ts::p",
+        "kind": "function",
+        "name": "p"
+      },
+      "order": 3,
+      "recursiveDependents": 3,
+      "recursiveDeps": 4
+    },
+    {
+      "clusterIndex": 1,
+      "dependents": [
+        "src/p.ts::p"
+      ],
+      "dependsOn": [],
+      "entity": {
+        "category": "logic",
+        "change": "added",
+        "file": "src/q.ts",
+        "hunks": [
+          {
+            "added": 10,
+            "endLine": 10,
+            "file": "src/q.ts",
+            "patch": "+export function q() {\n+  return r();   // q -> r\n+}",
+            "removed": 0,
+            "startLine": 1
+          }
+        ],
+        "id": "src/q.ts::q",
+        "kind": "function",
+        "name": "q"
+      },
+      "order": 4,
+      "recursiveDependents": 3,
+      "recursiveDeps": 4
+    },
+    {
+      "clusterIndex": 1,
+      "dependents": [
+        "src/q.ts::q"
+      ],
+      "dependsOn": [
+        "src/s.ts::s",
+        "src/p.ts::p"
+      ],
+      "entity": {
+        "category": "logic",
+        "change": "added",
+        "file": "src/r.ts",
+        "hunks": [
+          {
+            "added": 10,
+            "endLine": 10,
+            "file": "src/r.ts",
+            "patch": "+export function r() {\n+  s();          // r -> s (into the other cycle)\n+  return p();   // r -> p (closes p/q/r cycle)\n+}",
+            "removed": 0,
+            "startLine": 1
+          }
+        ],
+        "id": "src/r.ts::r",
+        "kind": "function",
+        "name": "r"
+      },
+      "order": 5,
+      "recursiveDependents": 3,
+      "recursiveDeps": 4
+    },
+    {
+      "clusterIndex": 2,
+      "dependents": [],
+      "dependsOn": [
+        "src/p.ts::p"
+      ],
+      "entity": {
+        "category": "wiring",
+        "change": "added",
+        "file": "src/u.ts",
+        "hunks": [
+          {
+            "added": 6,
+            "endLine": 6,
+            "file": "src/u.ts",
+            "patch": "+export function u() {\n+  return p();   // u -> p\n+}",
+            "removed": 0,
+            "startLine": 1
+          }
+        ],
+        "id": "src/u.ts::u",
+        "kind": "function",
+        "name": "u"
+      },
+      "order": 6,
+      "recursiveDependents": 0,
+      "recursiveDeps": 5
+    }
+  ]
+}

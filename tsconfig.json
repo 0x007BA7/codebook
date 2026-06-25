@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "jsx": "react-jsx"
+  },
+  "files": [],
+  "references": [
+    { "path": "packages/contracts" },
+    { "path": "packages/core" },
+    { "path": "packages/ingest" },
+    { "path": "packages/server" },
+    { "path": "packages/cli" },
+    { "path": "packages/web" }
+  ]
+}

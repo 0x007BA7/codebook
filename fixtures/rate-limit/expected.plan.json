@@ -1,0 +1,274 @@
+{
+  "clusters": [
+    {
+      "entityIds": [
+        "src/config/rateLimit.ts::RateLimitConfig"
+      ],
+      "index": 0,
+      "isCycle": false
+    },
+    {
+      "cycleRel": "mutual recursion",
+      "entityIds": [
+        "src/http/headers.ts::parseHeaders",
+        "src/http/headers.ts::validateHeaders"
+      ],
+      "index": 1,
+      "isCycle": true
+    },
+    {
+      "entityIds": [
+        "src/limiter/bucket.ts::TokenBucket"
+      ],
+      "index": 2,
+      "isCycle": false
+    },
+    {
+      "entityIds": [
+        "src/limiter/index.ts::RateLimiter.check"
+      ],
+      "index": 3,
+      "isCycle": false
+    },
+    {
+      "entityIds": [
+        "src/http/middleware.ts::rateLimit"
+      ],
+      "index": 4,
+      "isCycle": false
+    },
+    {
+      "entityIds": [
+        "src/server.ts::bootstrap"
+      ],
+      "index": 5,
+      "isCycle": false
+    }
+  ],
+  "pr": {
+    "base": "main",
+    "head": "feat/rate-limit",
+    "repo": "example/api"
+  },
+  "schemaVersion": 1,
+  "stats": {
+    "backwardEdges": 0,
+    "clusterCount": 6,
+    "cycleCount": 1,
+    "edgeCount": 8,
+    "entityCount": 7,
+    "maxClusterSize": 2,
+    "totalAdded": 261,
+    "totalRemoved": 19
+  },
+  "steps": [
+    {
+      "clusterIndex": 0,
+      "dependents": [
+        "src/limiter/bucket.ts::TokenBucket",
+        "src/limiter/index.ts::RateLimiter.check"
+      ],
+      "dependsOn": [],
+      "entity": {
+        "category": "config",
+        "change": "added",
+        "file": "src/config/rateLimit.ts",
+        "hunks": [
+          {
+            "added": 18,
+            "endLine": 18,
+            "file": "src/config/rateLimit.ts",
+            "patch": "+export interface RateLimitConfig {\n+  /** max tokens in the bucket */\n+  capacity: number;\n+  /** tokens added per second */\n+  refillPerSec: number;\n+  /** identity used for bucketing */\n+  keyBy: 'apiKey' | 'ip';\n+}",
+            "removed": 0,
+            "startLine": 1
+          }
+        ],
+        "id": "src/config/rateLimit.ts::RateLimitConfig",
+        "kind": "type",
+        "name": "RateLimitConfig"
+      },
+      "order": 1,
+      "recursiveDependents": 4,
+      "recursiveDeps": 0
+    },
+    {
+      "clusterIndex": 1,
+      "dependents": [
+        "src/http/headers.ts::validateHeaders",
+        "src/http/middleware.ts::rateLimit"
+      ],
+      "dependsOn": [],
+      "entity": {
+        "category": "logic",
+        "change": "modified",
+        "file": "src/http/headers.ts",
+        "hunks": [
+          {
+            "added": 52,
+            "endLine": 62,
+            "file": "src/http/headers.ts",
+            "patch": "-export function parseHeaders(raw: string): Headers {\n-  return JSON.parse(raw);\n-}\n+export function parseHeaders(raw: string): Headers {\n+  const headers = new Headers();\n+  for (const line of raw.split('\\r\\n')) {\n+    const [k, v] = line.split(': ');\n+    if (k && v) headers.append(k, validateHeaders(k, v));\n+  }\n+  return headers;\n+}",
+            "removed": 12,
+            "startLine": 10
+          }
+        ],
+        "id": "src/http/headers.ts::parseHeaders",
+        "kind": "function",
+        "name": "parseHeaders()"
+      },
+      "order": 2,
+      "recursiveDependents": 3,
+      "recursiveDeps": 1
+    },
+    {
+      "clusterIndex": 1,
+      "dependents": [
+        "src/http/headers.ts::parseHeaders"
+      ],
+      "dependsOn": [
+        "src/http/headers.ts::parseHeaders"
+      ],
+      "entity": {
+        "category": "logic",
+        "change": "modified",
+        "file": "src/http/headers.ts",
+        "hunks": [
+          {
+            "added": 37,
+            "endLine": 107,
+            "file": "src/http/headers.ts",
+            "patch": "-export function validateHeaders(_k: string, v: string): string {\n-  return v;\n-}\n+export function validateHeaders(k: string, v: string): string {\n+  if (k.length > 256) throw new Error('header name too long');\n+  // defensively re-parse suspicious multi-line values\n+  if (v.includes('\\n')) parseHeaders(v);\n+  return v.trim();\n+}",
+            "removed": 4,
+            "startLine": 70
+          }
+        ],
+        "id": "src/http/headers.ts::validateHeaders",
+        "kind": "function",
+        "name": "validateHeaders()"
+      },
+      "order": 3,
+      "recursiveDependents": 3,
+      "recursiveDeps": 1
+    },
+    {
+      "clusterIndex": 2,
+      "dependents": [
+        "src/limiter/index.ts::RateLimiter.check"
+      ],
+      "dependsOn": [
+        "src/config/rateLimit.ts::RateLimitConfig"
+      ],
+      "entity": {
+        "category": "logic",
+        "change": "added",
+        "file": "src/limiter/bucket.ts",
+        "hunks": [
+          {
+            "added": 64,
+            "endLine": 64,
+            "file": "src/limiter/bucket.ts",
+            "patch": "+export class TokenBucket {\n+  private tokens: number;\n+  private lastRefill = now();\n+  constructor(private cfg: RateLimitConfig) {\n+    this.tokens = cfg.capacity;\n+  }\n+  take(n = 1): boolean {\n+    this.refill();\n+    if (this.tokens < n) return false;\n+    this.tokens -= n;\n+    return true;\n+  }\n+}",
+            "removed": 0,
+            "startLine": 1
+          }
+        ],
+        "id": "src/limiter/bucket.ts::TokenBucket",
+        "kind": "class",
+        "name": "TokenBucket"
+      },
+      "order": 4,
+      "recursiveDependents": 3,
+      "recursiveDeps": 1
+    },
+    {
+      "clusterIndex": 3,
+      "dependents": [
+        "src/http/middleware.ts::rateLimit"
+      ],
+      "dependsOn": [
+        "src/config/rateLimit.ts::RateLimitConfig",
+        "src/limiter/bucket.ts::TokenBucket"
+      ],
+      "entity": {
+        "category": "logic",
+        "change": "added",
+        "file": "src/limiter/index.ts",
+        "hunks": [
+          {
+            "added": 36,
+            "endLine": 58,
+            "file": "src/limiter/index.ts",
+            "patch": "+  check(key: string): { ok: boolean; remaining: number } {\n+    let bucket = this.buckets.get(key);\n+    if (!bucket) this.buckets.set(key, (bucket = new TokenBucket(this.cfg)));\n+    const ok = bucket.take(1);\n+    return { ok, remaining: bucket.peek() };\n+  }",
+            "removed": 0,
+            "startLine": 22
+          }
+        ],
+        "id": "src/limiter/index.ts::RateLimiter.check",
+        "kind": "method",
+        "name": "RateLimiter.check()"
+      },
+      "order": 5,
+      "recursiveDependents": 2,
+      "recursiveDeps": 2
+    },
+    {
+      "clusterIndex": 4,
+      "dependents": [
+        "src/server.ts::bootstrap"
+      ],
+      "dependsOn": [
+        "src/http/headers.ts::parseHeaders",
+        "src/limiter/index.ts::RateLimiter.check"
+      ],
+      "entity": {
+        "category": "wiring",
+        "change": "added",
+        "file": "src/http/middleware.ts",
+        "hunks": [
+          {
+            "added": 40,
+            "endLine": 40,
+            "file": "src/http/middleware.ts",
+            "patch": "+export function rateLimit(limiter: RateLimiter) {\n+  return (req, res, next) => {\n+    const key = parseHeaders(req.rawHeaders).get('x-api-key') ?? req.ip;\n+    const { ok, remaining } = limiter.check(key);\n+    res.setHeader('x-ratelimit-remaining', remaining);\n+    if (!ok) return res.status(429).end();\n+    next();\n+  };\n+}",
+            "removed": 0,
+            "startLine": 1
+          }
+        ],
+        "id": "src/http/middleware.ts::rateLimit",
+        "kind": "function",
+        "name": "rateLimit()"
+      },
+      "order": 6,
+      "recursiveDependents": 1,
+      "recursiveDeps": 5
+    },
+    {
+      "clusterIndex": 5,
+      "dependents": [],
+      "dependsOn": [
+        "src/http/middleware.ts::rateLimit"
+      ],
+      "entity": {
+        "category": "wiring",
+        "change": "modified",
+        "file": "src/server.ts",
+        "hunks": [
+          {
+            "added": 14,
+            "endLine": 30,
+            "file": "src/server.ts",
+            "patch": " const app = createServer();\n+  const limiter = new RateLimiter(config.rateLimit);\n+  app.use(rateLimit(limiter));\n   app.use(router);",
+            "removed": 3,
+            "startLine": 12
+          }
+        ],
+        "id": "src/server.ts::bootstrap",
+        "kind": "function",
+        "name": "bootstrap()"
+      },
+      "order": 7,
+      "recursiveDependents": 0,
+      "recursiveDeps": 6
+    }
+  ]
+}

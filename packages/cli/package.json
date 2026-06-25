@@ -1,0 +1,17 @@
+{
+  "name": "@prl/cli",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "prl": "./src/main.ts"
+  },
+  "dependencies": {
+    "@prl/contracts": "*",
+    "@prl/core": "*",
+    "@prl/ingest": "*",
+    "@prl/web": "*",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  }
+}

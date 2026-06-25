@@ -1,0 +1,155 @@
+{
+  "schemaVersion": 1,
+  "pr": {
+    "repo": "example/nested",
+    "base": "main",
+    "head": "feat/nested"
+  },
+  "entities": [
+    {
+      "id": "src/p.ts::p",
+      "name": "p",
+      "file": "src/p.ts",
+      "kind": "function",
+      "change": "added",
+      "category": "logic",
+      "hunks": [
+        {
+          "file": "src/p.ts",
+          "startLine": 1,
+          "endLine": 10,
+          "added": 10,
+          "removed": 0,
+          "patch": "+export function p() {\n+  return q();   // p -> q\n+}"
+        }
+      ]
+    },
+    {
+      "id": "src/q.ts::q",
+      "name": "q",
+      "file": "src/q.ts",
+      "kind": "function",
+      "change": "added",
+      "category": "logic",
+      "hunks": [
+        {
+          "file": "src/q.ts",
+          "startLine": 1,
+          "endLine": 10,
+          "added": 10,
+          "removed": 0,
+          "patch": "+export function q() {\n+  return r();   // q -> r\n+}"
+        }
+      ]
+    },
+    {
+      "id": "src/r.ts::r",
+      "name": "r",
+      "file": "src/r.ts",
+      "kind": "function",
+      "change": "added",
+      "category": "logic",
+      "hunks": [
+        {
+          "file": "src/r.ts",
+          "startLine": 1,
+          "endLine": 10,
+          "added": 10,
+          "removed": 0,
+          "patch": "+export function r() {\n+  s();          // r -> s (into the other cycle)\n+  return p();   // r -> p (closes p/q/r cycle)\n+}"
+        }
+      ]
+    },
+    {
+      "id": "src/s.ts::s",
+      "name": "s",
+      "file": "src/s.ts",
+      "kind": "function",
+      "change": "modified",
+      "category": "logic",
+      "hunks": [
+        {
+          "file": "src/s.ts",
+          "startLine": 1,
+          "endLine": 10,
+          "added": 5,
+          "removed": 2,
+          "patch": "-import { t } from './t';\n+import { t } from './t';   // s <-> t circular import\n+export const s = () => t();"
+        }
+      ]
+    },
+    {
+      "id": "src/t.ts::t",
+      "name": "t",
+      "file": "src/t.ts",
+      "kind": "function",
+      "change": "modified",
+      "category": "logic",
+      "hunks": [
+        {
+          "file": "src/t.ts",
+          "startLine": 1,
+          "endLine": 10,
+          "added": 5,
+          "removed": 2,
+          "patch": "-import { s } from './s';\n+import { s } from './s';   // t <-> s circular import\n+export const t = () => s();"
+        }
+      ]
+    },
+    {
+      "id": "src/u.ts::u",
+      "name": "u",
+      "file": "src/u.ts",
+      "kind": "function",
+      "change": "added",
+      "category": "wiring",
+      "hunks": [
+        {
+          "file": "src/u.ts",
+          "startLine": 1,
+          "endLine": 6,
+          "added": 6,
+          "removed": 0,
+          "patch": "+export function u() {\n+  return p();   // u -> p\n+}"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "src/p.ts::p",
+      "to": "src/q.ts::q",
+      "rel": "calls"
+    },
+    {
+      "from": "src/q.ts::q",
+      "to": "src/r.ts::r",
+      "rel": "calls"
+    },
+    {
+      "from": "src/r.ts::r",
+      "to": "src/p.ts::p",
+      "rel": "calls"
+    },
+    {
+      "from": "src/s.ts::s",
+      "to": "src/t.ts::t",
+      "rel": "imports"
+    },
+    {
+      "from": "src/t.ts::t",
+      "to": "src/s.ts::s",
+      "rel": "imports"
+    },
+    {
+      "from": "src/r.ts::r",
+      "to": "src/s.ts::s",
+      "rel": "calls"
+    },
+    {
+      "from": "src/u.ts::u",
+      "to": "src/p.ts::p",
+      "rel": "calls"
+    }
+  ]
+}

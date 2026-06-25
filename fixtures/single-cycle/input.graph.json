@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "pr": {
+    "repo": "example/cycle",
+    "base": "main",
+    "head": "feat/cycle"
+  },
+  "entities": [
+    {
+      "id": "src/x.ts::X",
+      "name": "X",
+      "file": "src/x.ts",
+      "kind": "function",
+      "change": "added",
+      "category": "logic",
+      "hunks": [
+        {
+          "file": "src/x.ts",
+          "startLine": 1,
+          "endLine": 12,
+          "added": 12,
+          "removed": 0,
+          "patch": "+export function X(n: number): number {\n+  if (n <= 0) return 0;\n+  return Y(n - 1);   // X -> Y\n+}"
+        }
+      ]
+    },
+    {
+      "id": "src/y.ts::Y",
+      "name": "Y",
+      "file": "src/y.ts",
+      "kind": "function",
+      "change": "modified",
+      "category": "logic",
+      "hunks": [
+        {
+          "file": "src/y.ts",
+          "startLine": 5,
+          "endLine": 20,
+          "added": 10,
+          "removed": 5,
+          "patch": "-export function Y(n: number): number {\n-  return n;\n+export function Y(n: number): number {\n+  return Z(n) + 1;   // Y -> Z\n+}"
+        }
+      ]
+    },
+    {
+      "id": "src/z.ts::Z",
+      "name": "Z",
+      "file": "src/z.ts",
+      "kind": "function",
+      "change": "modified",
+      "category": "logic",
+      "hunks": [
+        {
+          "file": "src/z.ts",
+          "startLine": 1,
+          "endLine": 9,
+          "added": 6,
+          "removed": 3,
+          "patch": "-export function Z(n: number): number {\n-  return n * 2;\n+export function Z(n: number): number {\n+  return X(n);       // Z -> X  (closes the cycle)\n+}"
+        }
+      ]
+    },
+    {
+      "id": "src/entry.ts::entry",
+      "name": "entry",
+      "file": "src/entry.ts",
+      "kind": "function",
+      "change": "added",
+      "category": "wiring",
+      "hunks": [
+        {
+          "file": "src/entry.ts",
+          "startLine": 1,
+          "endLine": 8,
+          "added": 8,
+          "removed": 0,
+          "patch": "+export function entry() {\n+  return X(10);      // entry point into the cycle\n+}"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "src/x.ts::X",
+      "to": "src/y.ts::Y",
+      "rel": "calls"
+    },
+    {
+      "from": "src/y.ts::Y",
+      "to": "src/z.ts::Z",
+      "rel": "calls"
+    },
+    {
+      "from": "src/z.ts::Z",
+      "to": "src/x.ts::X",
+      "rel": "calls"
+    },
+    {
+      "from": "src/entry.ts::entry",
+      "to": "src/x.ts::X",
+      "rel": "calls"
+    }
+  ]
+}

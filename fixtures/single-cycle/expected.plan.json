@@ -1,0 +1,154 @@
+{
+  "clusters": [
+    {
+      "cycleRel": "mutual recursion",
+      "entityIds": [
+        "src/x.ts::X",
+        "src/y.ts::Y",
+        "src/z.ts::Z"
+      ],
+      "index": 0,
+      "isCycle": true
+    },
+    {
+      "entityIds": [
+        "src/entry.ts::entry"
+      ],
+      "index": 1,
+      "isCycle": false
+    }
+  ],
+  "pr": {
+    "base": "main",
+    "head": "feat/cycle",
+    "repo": "example/cycle"
+  },
+  "schemaVersion": 1,
+  "stats": {
+    "backwardEdges": 0,
+    "clusterCount": 2,
+    "cycleCount": 1,
+    "edgeCount": 4,
+    "entityCount": 4,
+    "maxClusterSize": 3,
+    "totalAdded": 36,
+    "totalRemoved": 8
+  },
+  "steps": [
+    {
+      "clusterIndex": 0,
+      "dependents": [
+        "src/z.ts::Z",
+        "src/entry.ts::entry"
+      ],
+      "dependsOn": [],
+      "entity": {
+        "category": "logic",
+        "change": "added",
+        "file": "src/x.ts",
+        "hunks": [
+          {
+            "added": 12,
+            "endLine": 12,
+            "file": "src/x.ts",
+            "patch": "+export function X(n: number): number {\n+  if (n <= 0) return 0;\n+  return Y(n - 1);   // X -> Y\n+}",
+            "removed": 0,
+            "startLine": 1
+          }
+        ],
+        "id": "src/x.ts::X",
+        "kind": "function",
+        "name": "X"
+      },
+      "order": 1,
+      "recursiveDependents": 3,
+      "recursiveDeps": 2
+    },
+    {
+      "clusterIndex": 0,
+      "dependents": [
+        "src/x.ts::X"
+      ],
+      "dependsOn": [],
+      "entity": {
+        "category": "logic",
+        "change": "modified",
+        "file": "src/y.ts",
+        "hunks": [
+          {
+            "added": 10,
+            "endLine": 20,
+            "file": "src/y.ts",
+            "patch": "-export function Y(n: number): number {\n-  return n;\n+export function Y(n: number): number {\n+  return Z(n) + 1;   // Y -> Z\n+}",
+            "removed": 5,
+            "startLine": 5
+          }
+        ],
+        "id": "src/y.ts::Y",
+        "kind": "function",
+        "name": "Y"
+      },
+      "order": 2,
+      "recursiveDependents": 3,
+      "recursiveDeps": 2
+    },
+    {
+      "clusterIndex": 0,
+      "dependents": [
+        "src/y.ts::Y"
+      ],
+      "dependsOn": [
+        "src/x.ts::X"
+      ],
+      "entity": {
+        "category": "logic",
+        "change": "modified",
+        "file": "src/z.ts",
+        "hunks": [
+          {
+            "added": 6,
+            "endLine": 9,
+            "file": "src/z.ts",
+            "patch": "-export function Z(n: number): number {\n-  return n * 2;\n+export function Z(n: number): number {\n+  return X(n);       // Z -> X  (closes the cycle)\n+}",
+            "removed": 3,
+            "startLine": 1
+          }
+        ],
+        "id": "src/z.ts::Z",
+        "kind": "function",
+        "name": "Z"
+      },
+      "order": 3,
+      "recursiveDependents": 3,
+      "recursiveDeps": 2
+    },
+    {
+      "clusterIndex": 1,
+      "dependents": [],
+      "dependsOn": [
+        "src/x.ts::X"
+      ],
+      "entity": {
+        "category": "wiring",
+        "change": "added",
+        "file": "src/entry.ts",
+        "hunks": [
+          {
+            "added": 8,
+            "endLine": 8,
+            "file": "src/entry.ts",
+            "patch": "+export function entry() {\n+  return X(10);      // entry point into the cycle\n+}",
+            "removed": 0,
+            "startLine": 1
+          }
+        ],
+        "id": "src/entry.ts::entry",
+        "kind": "function",
+        "name": "entry"
+      },
+      "order": 4,
+      "recursiveDependents": 0,
+      "recursiveDeps": 3
+    }
+  ]
+}

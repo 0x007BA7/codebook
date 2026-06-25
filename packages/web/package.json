@@ -1,0 +1,20 @@
+{
+  "name": "@prl/web",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./Spine": "./src/Spine.tsx",
+    "./popdown": "./src/popdown.ts"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@prl/contracts": "*",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  }
+}

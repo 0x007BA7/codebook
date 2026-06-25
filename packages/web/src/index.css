@@ -1,0 +1,210 @@
+/* Flat design: no gradients, no shadows (§15). Color encodes category only. */
+:root {
+  --bg: #fbfbfa;
+  --fg: #1f2328;
+  --muted: #6a737d;
+  --line: #d7dbe0;
+  --rail: #c2cad1;
+  --add: #1a7f37;
+  --del: #b3261e;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); }
+.app { max-width: 920px; margin: 0 auto; padding: 24px 20px 80px; }
+
+.topbar { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+.topbar h1 { font-size: 18px; margin: 0; }
+.topbar select { font: inherit; padding: 2px 6px; border: 1px solid var(--line); background: #fff; }
+
+.legend { display: flex; gap: 14px; margin-left: auto; font-size: 12px; color: var(--muted); }
+.legend-item { display: inline-flex; align-items: center; gap: 5px; }
+.swatch { width: 11px; height: 11px; border-radius: 2px; display: inline-block; }
+
+.stats { color: var(--muted); font-size: 13px; margin: 14px 0 18px; }
+.error { color: var(--del); }
+.add { color: var(--add); }
+.del { color: var(--del); }
+
+/* --- spine: grouped by file; rows FLOW (no fixed heights => no overlap) --- */
+.steps { display: flex; flex-direction: column; }
+.file-group { margin: 20px 0 2px; }
+.file-head {
+  display: flex; align-items: baseline; gap: 10px;
+  padding: 6px 0 6px 44px; margin-bottom: 2px;
+  border-bottom: 1px solid var(--line);
+}
+.file-name { font-weight: 600; font-size: 13px; word-break: break-all; }
+.file-count { font-size: 11px; color: var(--muted); white-space: nowrap; margin-left: auto; }
+.step-row { display: flex; align-items: stretch; }
+
+/* left gutter holds the numbered badge; a line behind it forms the rail */
+.gutter { position: relative; flex: 0 0 44px; display: flex; justify-content: center; }
+.gutter::before {
+  content: ''; position: absolute; top: 0; bottom: 0; left: 50%;
+  width: 2px; background: var(--rail); transform: translateX(-50%);
+}
+.step-num {
+  position: relative; z-index: 1; margin-top: 12px;
+  width: 26px; height: 26px; border-radius: 50%;
+  background: #eef1f4; color: var(--fg); border: 1px solid var(--line);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 12px;
+}
+
+.step-card { flex: 1 1 auto; min-width: 0; border: 1px solid var(--line); background: #fff; margin: 6px 0; }
+.step-card > summary {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  list-style: none;
+}
+.step-card > summary::-webkit-details-marker { display: none; }
+.step-title { min-width: 0; display: inline-flex; align-items: baseline; gap: 6px; }
+.step-name { font-weight: 600; }
+.step-focus {
+  text-decoration: none; color: #1f5d8a; font-size: 12px; cursor: pointer;
+  opacity: 0.55; flex: 0 0 auto;
+}
+.step-focus:hover { opacity: 1; }
+.step-delta { font-size: 12px; white-space: nowrap; }
+.cycle-badge {
+  font-size: 11px; color: #6a3a8a; background: rgba(154, 123, 191, 0.12);
+  border: 1px solid #cdbbe4; border-radius: 3px; padding: 0 6px; white-space: nowrap;
+}
+
+/* card footer: deps + "used by" on the left, reviewed checkbox on the right */
+.card-foot {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 12px; color: var(--muted);
+  padding: 6px 12px; border-top: 1px solid var(--line);
+}
+.foot-left { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
+.deps { min-width: 0; }
+.dep-link { color: #1f5d8a; text-decoration: none; cursor: pointer; }
+.dep-link:hover { text-decoration: underline; }
+.dep-link.dep-open { font-weight: 600; }
+.deps-hint { color: var(--rail); font-style: italic; }
+
+/* "used by" dependents dropdown */
+.dependents > summary {
+  cursor: pointer; list-style: none; width: fit-content; color: #1f5d8a;
+}
+.dependents > summary::-webkit-details-marker { display: none; }
+.dependents > summary::before { content: '▸ '; }
+.dependents[open] > summary::before { content: '▾ '; }
+.dep-list { margin: 4px 0 2px; padding: 0 0 0 18px; display: flex; flex-direction: column; gap: 3px; }
+.dep-list li { list-style: none; }
+.reviewed-wrap {
+  margin-left: auto; display: inline-flex; align-items: center; gap: 5px;
+  white-space: nowrap; cursor: pointer; user-select: none;
+}
+.reviewed { cursor: pointer; }
+
+/* reviewing a step dims its card + greens its number (pure CSS via :has) */
+.step-card:has(.reviewed:checked) { opacity: 0.5; }
+.step-row:has(.reviewed:checked) .step-num {
+  background: #d8f3df; border-color: #1a7f37; color: #1a7f37;
+}
+
+/* preview of a dependency (popped below, or docked right). Injected at runtime. */
+.embed { margin: 2px 0 8px 44px; border-left: 3px solid #9a7bbf; padding-left: 8px; }
+.embed-label {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 11px; color: #6a3a8a; padding: 3px 4px;
+}
+.embed .step-card { margin: 0; }
+.embed-label { display: flex; align-items: center; gap: 8px; }
+.embed-label > span { flex: 1; min-width: 0; }
+.embed-focus {
+  border: 1px solid #cfe0ee; background: #eaf2f8; cursor: pointer;
+  font-size: 11px; line-height: 1; padding: 2px 8px; border-radius: 3px; color: #1f5d8a;
+}
+.embed-focus:hover { background: #d6e7f5; }
+.embed-close {
+  border: 1px solid var(--line); background: #fff; cursor: pointer;
+  font-size: 14px; font-weight: 700; line-height: 1; padding: 2px 8px;
+  border-radius: 3px; color: var(--fg);
+}
+.embed-close:hover { background: #ffebe9; color: #9e1c14; border-color: #e7a9a3; }
+
+/* floating review-progress pill (bottom-right; left of the dock when open) */
+.prl-progress {
+  position: fixed; right: 16px; bottom: 16px; z-index: 30;
+  font: inherit; font-size: 12px; cursor: pointer;
+  background: var(--fg); color: #fff; border: 1px solid var(--fg);
+  border-radius: 16px; padding: 8px 14px;
+}
+.prl-progress:hover { opacity: 0.9; }
+.prl-progress.prl-complete { background: #1a7f37; border-color: #1a7f37; }
+body.prl-docked .prl-progress { right: calc(var(--prl-dock-w, 480px) + 16px); }
+
+/* transient highlight when "focus in main" jumps to a step (flat: no shadow) */
+.prl-flash { animation: prl-flash 1.4s ease-out; }
+@keyframes prl-flash {
+  0%, 25% { background: #fff3bf; }
+  100% { background: #fff; }
+}
+
+/* settings dropdown (injected at runtime; works in the app and standalone) */
+.prl-settings {
+  font-size: 12px; color: var(--muted);
+  margin: 8px 0 4px; padding-bottom: 8px; border-bottom: 1px dashed var(--line);
+}
+.prl-settings > summary {
+  cursor: pointer; list-style: none; width: fit-content;
+  font-weight: 600; color: var(--fg); padding: 4px 0;
+}
+.prl-settings > summary::-webkit-details-marker { display: none; }
+.prl-settings > summary::before { content: '▸ '; }
+.prl-settings[open] > summary::before { content: '▾ '; }
+.prl-settings-body { display: flex; flex-direction: column; gap: 8px; padding: 6px 0 2px 14px; }
+.prl-setting { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.prl-setting-label { font-weight: 600; color: var(--fg); min-width: 150px; }
+.prl-settings label { cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+
+/* right-hand dock for "drop to the right" preview mode. Width is set at
+   runtime (--prl-dock-w) and is drag-resizable via the left-edge handle. */
+.prl-dock {
+  position: fixed; top: 0; right: 0; z-index: 20;
+  width: var(--prl-dock-w, 620px); height: 100vh; overflow: auto;
+  background: var(--bg); border-left: 1px solid var(--line);
+  padding: 10px 14px 48px 18px;
+}
+.prl-dock-resizer {
+  position: absolute; left: 0; top: 0; width: 7px; height: 100%;
+  cursor: col-resize; background: transparent;
+}
+.prl-dock-resizer:hover { background: rgba(31, 93, 138, 0.18); }
+body.prl-resizing { user-select: none; cursor: col-resize; }
+/* while the dock holds previews, reserve its width and move the spine left so
+   the main code isn't cramped under the fixed panel */
+body.prl-docked { padding-right: var(--prl-dock-w, 620px); }
+body.prl-docked .app { margin-left: 24px; margin-right: 24px; }
+.prl-dock-hdr {
+  display: flex; justify-content: space-between; align-items: center;
+  font-weight: 600; font-size: 12px; color: var(--muted); margin-bottom: 8px;
+}
+.prl-dock .embed { margin: 0 0 10px 0; border-left-width: 4px; }
+
+.hunks { border-top: 1px solid var(--line); padding: 8px 12px; background: #fafbfc; }
+.hunk { font-size: 12px; padding: 4px 0; color: var(--muted); }
+.hunk + .hunk { border-top: 1px dashed var(--line); }
+.hunk-head { display: flex; justify-content: space-between; }
+.hunk code { color: var(--fg); }
+
+/* actual diff text rendered on expand (§8.2). add/del shown via background;
+   text is syntax-highlighted (comments/strings) like a real diff viewer. */
+.diff { margin: 6px 0 2px; font-size: 12px; line-height: 1.5; overflow-x: auto; white-space: pre; color: #1f2328; }
+.diff-line { padding: 0 6px; }
+.diff-line.add { background: #e6ffec; }
+.diff-line.del { background: #ffebe9; }
+.diff-sign { display: inline-block; width: 1ch; color: var(--muted); }
+.diff-sign.add { color: #18753a; font-weight: 700; }
+.diff-sign.del { color: #b02a21; font-weight: 700; }
+.tok-com { color: #7d8590; font-style: italic; }
+.tok-str { color: #9a5b00; }

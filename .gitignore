@@ -1,0 +1,16 @@
+node_modules/
+dist/
+packages/web/dist/
+*.log
+.DS_Store
+eval/report.html
+eval/scorecard.json
+.vite/
+test-results/
+
+# local PR-review outputs + scratch checkouts (never part of this repo)
+/*.html
+/biocurator/
+/data_ingestion/
+/_rt/
+/_min.ts

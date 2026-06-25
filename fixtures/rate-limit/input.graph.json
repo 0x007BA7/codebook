@@ -1,0 +1,178 @@
+{
+  "schemaVersion": 1,
+  "pr": {
+    "repo": "example/api",
+    "base": "main",
+    "head": "feat/rate-limit"
+  },
+  "entities": [
+    {
+      "id": "src/config/rateLimit.ts::RateLimitConfig",
+      "name": "RateLimitConfig",
+      "file": "src/config/rateLimit.ts",
+      "kind": "type",
+      "change": "added",
+      "category": "config",
+      "hunks": [
+        {
+          "file": "src/config/rateLimit.ts",
+          "startLine": 1,
+          "endLine": 18,
+          "added": 18,
+          "removed": 0,
+          "patch": "+export interface RateLimitConfig {\n+  /** max tokens in the bucket */\n+  capacity: number;\n+  /** tokens added per second */\n+  refillPerSec: number;\n+  /** identity used for bucketing */\n+  keyBy: 'apiKey' | 'ip';\n+}"
+        }
+      ]
+    },
+    {
+      "id": "src/limiter/bucket.ts::TokenBucket",
+      "name": "TokenBucket",
+      "file": "src/limiter/bucket.ts",
+      "kind": "class",
+      "change": "added",
+      "category": "logic",
+      "hunks": [
+        {
+          "file": "src/limiter/bucket.ts",
+          "startLine": 1,
+          "endLine": 64,
+          "added": 64,
+          "removed": 0,
+          "patch": "+export class TokenBucket {\n+  private tokens: number;\n+  private lastRefill = now();\n+  constructor(private cfg: RateLimitConfig) {\n+    this.tokens = cfg.capacity;\n+  }\n+  take(n = 1): boolean {\n+    this.refill();\n+    if (this.tokens < n) return false;\n+    this.tokens -= n;\n+    return true;\n+  }\n+}"
+        }
+      ]
+    },
+    {
+      "id": "src/limiter/index.ts::RateLimiter.check",
+      "name": "RateLimiter.check()",
+      "file": "src/limiter/index.ts",
+      "kind": "method",
+      "change": "added",
+      "category": "logic",
+      "hunks": [
+        {
+          "file": "src/limiter/index.ts",
+          "startLine": 22,
+          "endLine": 58,
+          "added": 36,
+          "removed": 0,
+          "patch": "+  check(key: string): { ok: boolean; remaining: number } {\n+    let bucket = this.buckets.get(key);\n+    if (!bucket) this.buckets.set(key, (bucket = new TokenBucket(this.cfg)));\n+    const ok = bucket.take(1);\n+    return { ok, remaining: bucket.peek() };\n+  }"
+        }
+      ]
+    },
+    {
+      "id": "src/http/headers.ts::parseHeaders",
+      "name": "parseHeaders()",
+      "file": "src/http/headers.ts",
+      "kind": "function",
+      "change": "modified",
+      "category": "logic",
+      "hunks": [
+        {
+          "file": "src/http/headers.ts",
+          "startLine": 10,
+          "endLine": 62,
+          "added": 52,
+          "removed": 12,
+          "patch": "-export function parseHeaders(raw: string): Headers {\n-  return JSON.parse(raw);\n-}\n+export function parseHeaders(raw: string): Headers {\n+  const headers = new Headers();\n+  for (const line of raw.split('\\r\\n')) {\n+    const [k, v] = line.split(': ');\n+    if (k && v) headers.append(k, validateHeaders(k, v));\n+  }\n+  return headers;\n+}"
+        }
+      ]
+    },
+    {
+      "id": "src/http/headers.ts::validateHeaders",
+      "name": "validateHeaders()",
+      "file": "src/http/headers.ts",
+      "kind": "function",
+      "change": "modified",
+      "category": "logic",
+      "hunks": [
+        {
+          "file": "src/http/headers.ts",
+          "startLine": 70,
+          "endLine": 107,
+          "added": 37,
+          "removed": 4,
+          "patch": "-export function validateHeaders(_k: string, v: string): string {\n-  return v;\n-}\n+export function validateHeaders(k: string, v: string): string {\n+  if (k.length > 256) throw new Error('header name too long');\n+  // defensively re-parse suspicious multi-line values\n+  if (v.includes('\\n')) parseHeaders(v);\n+  return v.trim();\n+}"
+        }
+      ]
+    },
+    {
+      "id": "src/http/middleware.ts::rateLimit",
+      "name": "rateLimit()",
+      "file": "src/http/middleware.ts",
+      "kind": "function",
+      "change": "added",
+      "category": "wiring",
+      "hunks": [
+        {
+          "file": "src/http/middleware.ts",
+          "startLine": 1,
+          "endLine": 40,
+          "added": 40,
+          "removed": 0,
+          "patch": "+export function rateLimit(limiter: RateLimiter) {\n+  return (req, res, next) => {\n+    const key = parseHeaders(req.rawHeaders).get('x-api-key') ?? req.ip;\n+    const { ok, remaining } = limiter.check(key);\n+    res.setHeader('x-ratelimit-remaining', remaining);\n+    if (!ok) return res.status(429).end();\n+    next();\n+  };\n+}"
+        }
+      ]
+    },
+    {
+      "id": "src/server.ts::bootstrap",
+      "name": "bootstrap()",
+      "file": "src/server.ts",
+      "kind": "function",
+      "change": "modified",
+      "category": "wiring",
+      "hunks": [
+        {
+          "file": "src/server.ts",
+          "startLine": 12,
+          "endLine": 30,
+          "added": 14,
+          "removed": 3,
+          "patch": " const app = createServer();\n+  const limiter = new RateLimiter(config.rateLimit);\n+  app.use(rateLimit(limiter));\n   app.use(router);"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "src/limiter/bucket.ts::TokenBucket",
+      "to": "src/config/rateLimit.ts::RateLimitConfig",
+      "rel": "uses-type"
+    },
+    {
+      "from": "src/limiter/index.ts::RateLimiter.check",
+      "to": "src/limiter/bucket.ts::TokenBucket",
+      "rel": "calls"
+    },
+    {
+      "from": "src/limiter/index.ts::RateLimiter.check",
+      "to": "src/config/rateLimit.ts::RateLimitConfig",
+      "rel": "uses-type"
+    },
+    {
+      "from": "src/http/headers.ts::parseHeaders",
+      "to": "src/http/headers.ts::validateHeaders",
+      "rel": "calls"
+    },
+    {
+      "from": "src/http/headers.ts::validateHeaders",
+      "to": "src/http/headers.ts::parseHeaders",
+      "rel": "calls"
+    },
+    {
+      "from": "src/http/middleware.ts::rateLimit",
+      "to": "src/limiter/index.ts::RateLimiter.check",
+      "rel": "calls"
+    },
+    {
+      "from": "src/http/middleware.ts::rateLimit",
+      "to": "src/http/headers.ts::parseHeaders",
+      "rel": "calls"
+    },
+    {
+      "from": "src/server.ts::bootstrap",
+      "to": "src/http/middleware.ts::rateLimit",
+      "rel": "calls"
+    }
+  ]
+}

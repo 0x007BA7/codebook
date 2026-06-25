@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "pr": {
+    "repo": "example/chain",
+    "base": "main",
+    "head": "feat/chain"
+  },
+  "entities": [
+    {
+      "id": "src/a.ts::A",
+      "name": "A",
+      "file": "src/a.ts",
+      "kind": "function",
+      "change": "added",
+      "category": "logic",
+      "hunks": [
+        {
+          "file": "src/a.ts",
+          "startLine": 1,
+          "endLine": 10,
+          "added": 10,
+          "removed": 0,
+          "patch": "+export function A(req: Request): Response {\n+  const data = B(req.body);\n+  return new Response(JSON.stringify(data));\n+}"
+        }
+      ]
+    },
+    {
+      "id": "src/b.ts::B",
+      "name": "B",
+      "file": "src/b.ts",
+      "kind": "function",
+      "change": "added",
+      "category": "logic",
+      "hunks": [
+        {
+          "file": "src/b.ts",
+          "startLine": 1,
+          "endLine": 10,
+          "added": 10,
+          "removed": 0,
+          "patch": "+export function B(body: unknown): Parsed {\n+  const rows = C(body);\n+  return { rows, count: rows.length };\n+}"
+        }
+      ]
+    },
+    {
+      "id": "src/c.ts::C",
+      "name": "C",
+      "file": "src/c.ts",
+      "kind": "function",
+      "change": "added",
+      "category": "logic",
+      "hunks": [
+        {
+          "file": "src/c.ts",
+          "startLine": 1,
+          "endLine": 10,
+          "added": 10,
+          "removed": 0,
+          "patch": "+export function C(body: unknown): Row[] {\n+  const raw = D(body);\n+  return raw.map((r) => ({ ...r, seen: true }));\n+}"
+        }
+      ]
+    },
+    {
+      "id": "src/d.ts::D",
+      "name": "D",
+      "file": "src/d.ts",
+      "kind": "function",
+      "change": "added",
+      "category": "logic",
+      "hunks": [
+        {
+          "file": "src/d.ts",
+          "startLine": 1,
+          "endLine": 10,
+          "added": 10,
+          "removed": 0,
+          "patch": "+export function D(body: unknown): Raw[] {\n+  if (!Array.isArray(body)) return [];\n+  return body as Raw[];\n+}"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "src/a.ts::A",
+      "to": "src/b.ts::B",
+      "rel": "calls"
+    },
+    {
+      "from": "src/b.ts::B",
+      "to": "src/c.ts::C",
+      "rel": "calls"
+    },
+    {
+      "from": "src/c.ts::C",
+      "to": "src/d.ts::D",
+      "rel": "calls"
+    }
+  ]
+}

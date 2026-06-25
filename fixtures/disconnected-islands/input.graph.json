@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "pr": { "repo": "example/islands", "base": "main", "head": "feat/islands" },
+  "entities": [
+    { "id": "src/island1/a.ts::a1", "name": "a1", "file": "src/island1/a.ts", "kind": "function", "change": "added", "category": "logic",
+      "hunks": [{ "file": "src/island1/a.ts", "startLine": 1, "endLine": 10, "added": 10, "removed": 0 }] },
+    { "id": "src/island1/b.ts::b1", "name": "b1", "file": "src/island1/b.ts", "kind": "function", "change": "added", "category": "logic",
+      "hunks": [{ "file": "src/island1/b.ts", "startLine": 1, "endLine": 10, "added": 10, "removed": 0 }] },
+    { "id": "src/island2/c.ts::c2", "name": "c2", "file": "src/island2/c.ts", "kind": "function", "change": "added", "category": "test",
+      "hunks": [{ "file": "src/island2/c.ts", "startLine": 1, "endLine": 10, "added": 10, "removed": 0 }] },
+    { "id": "src/island2/d.ts::d2", "name": "d2", "file": "src/island2/d.ts", "kind": "function", "change": "added", "category": "test",
+      "hunks": [{ "file": "src/island2/d.ts", "startLine": 1, "endLine": 10, "added": 10, "removed": 0 }] },
+    { "id": "src/lonely.ts::lonely", "name": "lonely", "file": "src/lonely.ts", "kind": "const", "change": "added", "category": "config",
+      "hunks": [{ "file": "src/lonely.ts", "startLine": 1, "endLine": 4, "added": 4, "removed": 0 }] }
+  ],
+  "edges": [
+    { "from": "src/island1/a.ts::a1", "to": "src/island1/b.ts::b1", "rel": "calls" },
+    { "from": "src/island2/c.ts::c2", "to": "src/island2/d.ts::d2", "rel": "calls" }
+  ]
+}
