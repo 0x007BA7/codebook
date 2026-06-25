@@ -42,6 +42,7 @@ async function main(): Promise<void> {
         '  prl fixtures\n' +
         '  prl plan   --fixture <name>\n' +
         '  prl plan   --repo <dir> --base <ref> --head <ref> [--ingestor sem|fixture]\n' +
+        '  prl plan|render --repo <dir> --working|--staged   (local changes, no refs)\n' +
         '  prl render --repo <dir> --base <ref> --head <ref> --ingestor sem [--out plan.html]\n' +
         '  prl render --fixture <name> [--out plan.html]',
     );
@@ -54,7 +55,9 @@ async function main(): Promise<void> {
   }
 
   if (cmd === 'plan' || cmd === 'render') {
-    const useSem = flags.ingestor === 'sem' || (!flags.fixture && !!flags.repo);
+    const scope =
+      flags.working ? 'working' : flags.staged ? 'staged' : undefined;
+    const useSem = flags.ingestor === 'sem' || !!scope || (!flags.fixture && !!flags.repo);
     const ingestor: Ingestor = useSem ? new SemIngestor() : new FixtureIngestor();
     const input = await ingestor.ingest({
       fixture: flags.fixture,
@@ -62,6 +65,7 @@ async function main(): Promise<void> {
       base: flags.base,
       head: flags.head,
       cwd: flags.repo,
+      ...(scope ? { scope } : {}),
     });
     const plan = linearize(input);
 

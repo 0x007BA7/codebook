@@ -213,8 +213,17 @@ body.prl-docked .app { margin-left: 24px; margin-right: 24px; }
 .diff-sign { display: inline-block; width: 1ch; color: var(--muted); }
 .diff-sign.add { color: #18753a; font-weight: 700; }
 .diff-sign.del { color: #b02a21; font-weight: 700; }
-.tok-com { color: #7d8590; font-style: italic; }
-.tok-str { color: #9a5b00; }
+
+/* Prism syntax theme (compact, GitHub-light palette; readable over add/del tints) */
+.token.comment, .token.prolog, .token.doctype, .token.cdata { color: #6e7781; font-style: italic; }
+.token.punctuation { color: #57606a; }
+.token.keyword, .token.boolean, .token.atrule, .token.important, .token.tag, .token.selector { color: #cf222e; }
+.token.operator, .token.entity, .token.url { color: #0550ae; }
+.token.string, .token.char, .token.attr-value, .token.regex, .token.triple-quoted-string { color: #0a3069; }
+.token.number, .token.constant, .token.symbol { color: #0550ae; }
+.token.function, .token.class-name, .token.title { color: #8250df; }
+.token.property, .token.attr-name, .token.builtin, .token.variable, .token.parameter { color: #116329; }
+.token.decorator, .token.annotation { color: #953800; }
 
 /* side-by-side layout (hidden until the setting turns it on) */
 .diff-split { display: none; }

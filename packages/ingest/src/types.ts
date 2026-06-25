@@ -9,6 +9,12 @@ export interface IngestOpts {
   fixture?: string;
   /** Working directory of the checkout (SemIngestor). */
   cwd?: string;
+  /**
+   * Diff the local working tree instead of a base..head ref range (SemIngestor):
+   * "working" = all uncommitted changes vs HEAD, "staged" = staged changes only.
+   * When set, base/head are ignored.
+   */
+  scope?: 'working' | 'staged';
 }
 
 /**

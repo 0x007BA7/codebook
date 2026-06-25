@@ -84,12 +84,16 @@ describe('Spine (static markup, §8.2)', () => {
   it('renders the actual diff code on expand when a hunk has patch text (§8.2)', () => {
     const html = render('rate-limit');
     expect(html).toContain('class="diff"');
-    // real source lines from the fixture patches appear verbatim
-    expect(html).toContain('export class TokenBucket');
-    expect(html).toContain('return JSON.parse(raw);');
+    // source lines are syntax-highlighted into token spans, so strip tags to
+    // check the underlying code text is present
+    const text = html.replace(/<[^>]+>/g, '');
+    expect(text).toContain('export class TokenBucket');
+    expect(text).toContain('return JSON.parse(raw);');
     // added/removed lines carry their sign-based class for coloring
     expect(html).toContain('class="diff-line add"');
     expect(html).toContain('class="diff-line del"');
+    // Prism highlighting is applied (token spans present)
+    expect(html).toContain('class="token ');
   });
 
   it('color encodes category, not step number', () => {
@@ -127,10 +131,10 @@ describe('Spine (static markup, §8.2)', () => {
       edges: [],
     };
     const html = renderToStaticMarkup(createElement(Spine, { plan: linearize(g) }));
-    // docstring body is colored as a string, spanning lines…
-    expect(html).toMatch(/tok-str[^>]*>\s*docstring \/\/ not a comment/);
-    // …and the `//` inside it is NOT mistaken for a line comment
-    expect(html).not.toMatch(/tok-com[^>]*>\/\/ not a comment/);
+    // Prism tags the docstring body as a (triple-quoted) string, across lines…
+    expect(html).toMatch(/class="token[^"]*string[^"]*">[^<]*docstring \/\/ not a comment/);
+    // …and the `//` inside it is NOT mistaken for a comment token
+    expect(html).not.toMatch(/class="token comment[^"]*">[^<]*\/\/ not a comment/);
   });
 
   it('renders every fixture without throwing', () => {

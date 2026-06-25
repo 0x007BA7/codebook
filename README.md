@@ -90,12 +90,17 @@ prl-review 1234                       # opens the reading-spine HTML
 linearizes, and opens the spine. Other forms:
 
 ```bash
+prl-review --working                  # review your uncommitted changes (vs HEAD) — no PR/gh
+prl-review --staged                   # review only staged changes
 prl-review                            # review the current branch vs its base (no PR #)
 prl-review --base origin/main --head HEAD
 prl-review <repo-dir>                 # review a checkout elsewhere
 prl-review --fixture rate-limit       # built-in example, no sem/gh needed
 prl-review 1234 --out review.html     # write to a file instead of a temp file
 ```
+
+`--working`/`--staged` review your **local changes** with no commit, PR, or `gh`
+needed — and they're fast on re-runs since `sem`'s index stays warm in your repo.
 
 (`make uninstall` removes the symlink. Under the hood it runs the CLI's `render`
 command; you can still call `packages/cli/src/main.ts plan/render` directly, or

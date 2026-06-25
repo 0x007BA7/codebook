@@ -9,6 +9,8 @@
 #
 # Other forms:
 #   prl-review                   # review the current branch vs its base (no PR #)
+#   prl-review --working         # review your uncommitted changes (vs HEAD), no gh
+#   prl-review --staged          # review only staged changes
 #   prl-review --base origin/main --head HEAD
 #   prl-review <repo-dir> [--base <ref>] [--head <ref>]
 #   prl-review --fixture rate-limit   # built-in example, no sem/gh needed
@@ -42,13 +44,15 @@ resolve_ref() {
 }
 
 # --- parse args -------------------------------------------------------------
-PR="" REPO="" FIXTURE="" BASE="" HEAD="HEAD" OUT="" NO_OPEN=""
+PR="" REPO="" FIXTURE="" BASE="" HEAD="HEAD" OUT="" NO_OPEN="" SCOPE=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --fixture) FIXTURE="${2:-}"; shift 2;;
     --base)    BASE="${2:-}"; shift 2;;
     --head)    HEAD="${2:-}"; shift 2;;
     --out)     OUT="${2:-}"; shift 2;;
+    --working) SCOPE="working"; shift;;
+    --staged)  SCOPE="staged"; shift;;
     --no-open) NO_OPEN=1; shift;;
     -h|--help) sed -n '2,30p' "$0"; exit 0;;
     -*)        die "unknown flag: $1";;
@@ -91,7 +95,7 @@ command -v sem >/dev/null 2>&1 || die "the 'sem' CLI is required for real PRs.
 # untouched) so both `sem diff` and `sem graph` see the right code state. --------
 ORIG_REPO="$REPO"
 USER_BASE="$BASE"   # an explicit --base overrides the PR's declared base
-if [ -n "$PR" ]; then
+if [ -z "$SCOPE" ] && [ -n "$PR" ]; then
   command -v gh >/dev/null 2>&1 || die "GitHub 'gh' CLI is required for the PR-number form.
   install it (https://cli.github.com) and run 'gh auth login', or pass --base/--head yourself."
   echo "==> looking up PR #$PR via gh…"
@@ -136,14 +140,14 @@ if [ -n "$PR" ]; then
 fi
 
 # --- explicit --base outside PR mode: also diff from the merge-base (three-dot) ---
-if [ -z "$PR" ] && [ -n "$USER_BASE" ]; then
+if [ -z "$SCOPE" ] && [ -z "$PR" ] && [ -n "$USER_BASE" ]; then
   BR="$(resolve_ref "$REPO" "$USER_BASE")" || die "could not resolve --base '$USER_BASE'."
   BASE="$(git -C "$REPO" merge-base "$BR" "$HEAD" 2>/dev/null || echo "$BR")"
   echo "==> base $USER_BASE (merge-base ${BASE:0:9}) .. $HEAD"
 fi
 
 # --- no PR #, no base given: auto-detect base from the remote's default branch ---
-if [ -z "$BASE" ]; then
+if [ -z "$SCOPE" ] && [ -z "$BASE" ]; then
   DEF="$(git -C "$REPO" symbolic-ref --quiet refs/remotes/origin/HEAD 2>/dev/null || true)"
   DEF="${DEF#refs/remotes/}"; DEF="${DEF:-origin/main}"
   if git -C "$REPO" rev-parse --verify --quiet "$DEF" >/dev/null; then
@@ -155,10 +159,14 @@ if [ -z "$BASE" ]; then
 fi
 
 OUT="${OUT:-$REPO/pr-spine.html}"
-echo "==> linearizing $REPO  ($BASE..$HEAD) via sem…"
-RENDER_ARGS=(render --repo "$REPO" --base "$BASE" --head "$HEAD" --ingestor sem --out "$OUT")
-if [ -n "$PR" ]; then
-  RENDER_ARGS+=(--title "PR #$PR — ${HEAD_BRANCH:-head}")
+RENDER_ARGS=(render --repo "$REPO" --ingestor sem --out "$OUT")
+if [ -n "$SCOPE" ]; then
+  echo "==> reviewing local $SCOPE changes in $REPO via sem…"
+  RENDER_ARGS+=("--$SCOPE" --title "local: $SCOPE changes")
+else
+  echo "==> linearizing $REPO  ($BASE..$HEAD) via sem…"
+  RENDER_ARGS+=(--base "$BASE" --head "$HEAD")
+  [ -n "$PR" ] && RENDER_ARGS+=(--title "PR #$PR — ${HEAD_BRANCH:-head}")
 fi
 ( cd "$PROJECT_DIR" && SEM_NO_TELEMETRY=1 npx tsx "$CLI" "${RENDER_ARGS[@]}" )
 [ -n "$NO_OPEN" ] || { echo "==> opening $OUT"; opener "$OUT"; }

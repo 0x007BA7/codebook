@@ -230,10 +230,23 @@ export class SemIngestor implements Ingestor {
       return JSON.parse(out);
     };
 
-    const diff = run(['diff', '--from', base, '--to', head, '--json']) as SemDiff;
+    // Working-tree review: diff against HEAD (or staged) instead of a ref range.
+    const diffArgs =
+      opts.scope === 'working'
+        ? ['diff', 'HEAD', '--json']
+        : opts.scope === 'staged'
+          ? ['diff', '--staged', '--json']
+          : ['diff', '--from', base, '--to', head, '--json'];
+    const diff = run(diffArgs) as SemDiff;
     // Pass the repo path explicitly (not '.') so graph doesn't silently depend
     // on cwd while diff is explicit about its refs.
     const graph = run(['graph', '--json', cwd]) as SemGraph;
-    return normalizeSemOutput(diff, graph, { repo, base, head });
+    const prMeta =
+      opts.scope === 'working'
+        ? { repo, base: 'HEAD', head: 'working tree' }
+        : opts.scope === 'staged'
+          ? { repo, base: 'HEAD', head: 'staged' }
+          : { repo, base, head };
+    return normalizeSemOutput(diff, graph, prMeta);
   }
 }

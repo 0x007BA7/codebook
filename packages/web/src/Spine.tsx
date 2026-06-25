@@ -4,7 +4,8 @@
 import * as React from 'react';
 import type { ReactElement } from 'react';
 import type { ReadingPlan, ReadingStep, Cluster, Category } from '@prl/contracts';
-import { parsePatch, diffLines, splitRows } from './linediff.js';
+import { parsePatch, diffLines, splitRows, type DiffOp } from './linediff.js';
+import { highlightLines, langFor, type Seg } from './highlight.js';
 
 void React;
 
@@ -55,200 +56,89 @@ function fileGroups(plan: ReadingPlan): FileGroup[] {
   return groups;
 }
 
-// Tiny, language-agnostic, dependency-free tokenizer: splits a line into code /
-// string / comment runs. Good enough to color comments and strings differently
-// (handles // line comments, /* */ blocks, #/`*` full-line comments, and
-// '/"/` strings with escapes). Not a full parser — just readable highlighting.
-type Tok = { t: 'code' | 'str' | 'com'; v: string };
-function tokenizeCode(s: string): Tok[] {
-  const trimmed = s.replace(/^\s*/, '');
-  if (trimmed.startsWith('#') || trimmed.startsWith('*')) return [{ t: 'com', v: s }];
-  const out: Tok[] = [];
-  let code = '';
-  let i = 0;
-  const flush = (): void => {
-    if (code) out.push({ t: 'code', v: code });
-    code = '';
-  };
-  while (i < s.length) {
-    const c = s[i];
-    if (c === '/' && s[i + 1] === '/' && s[i - 1] !== ':') {
-      flush();
-      out.push({ t: 'com', v: s.slice(i) });
-      return out;
-    }
-    if (c === '/' && s[i + 1] === '*') {
-      flush();
-      const end = s.indexOf('*/', i + 2);
-      const stop = end === -1 ? s.length : end + 2;
-      out.push({ t: 'com', v: s.slice(i, stop) });
-      i = stop;
-      continue;
-    }
-    if (c === '"' || c === "'" || c === '`') {
-      flush();
-      let j = i + 1;
-      while (j < s.length) {
-        if (s[j] === '\\') {
-          j += 2;
-          continue;
-        }
-        if (s[j] === c) {
-          j++;
-          break;
-        }
-        j++;
-      }
-      out.push({ t: 'str', v: s.slice(i, j) });
-      i = j;
-      continue;
-    }
-    code += c;
-    i++;
-  }
-  flush();
-  return out;
-}
+const SIGN = { same: ' ', del: '-', add: '+' } as const;
 
-/** Syntax-highlight one line's text into spans (single-line tokenizer). */
-function hlTokens(text: string): React.ReactNode {
-  if (text === '') return ' ';
-  return tokenizeCode(text).map((tok, k) =>
-    tok.t === 'code' ? (
-      <React.Fragment key={k}>{tok.v}</React.Fragment>
-    ) : (
-      <span key={k} className={tok.t === 'com' ? 'tok-com' : 'tok-str'}>
-        {tok.v}
+/** Render one line's Prism segments into spans. */
+function renderSegs(segs: Seg[]): React.ReactNode {
+  if (!segs.length) return ' ';
+  return segs.map((s, k) =>
+    s.cls ? (
+      <span key={k} className={s.cls}>
+        {s.text}
       </span>
+    ) : (
+      <React.Fragment key={k}>{s.text}</React.Fragment>
     ),
   );
 }
 
-/** Earliest triple-quote (`"""` or `'''`) on a line, if any. */
-function findTriple(s: string): { delim: string; idx: number } | null {
-  const a = s.indexOf('"""');
-  const b = s.indexOf("'''");
-  if (a === -1 && b === -1) return null;
-  if (a === -1) return { delim: "'''", idx: b };
-  if (b === -1) return { delim: '"""', idx: a };
-  return a < b ? { delim: '"""', idx: a } : { delim: "'''", idx: b };
-}
-
-/**
- * Highlight one line given the current triple-quoted ("docstring") state.
- * `doc` is the open delimiter or null. Returns the rendered node and the new
- * state. Only triple-quotes change state, so ordinary code is unaffected.
- */
-function hlLine(text: string, doc: string | null): { node: React.ReactNode; doc: string | null } {
-  if (doc) {
-    const close = text.indexOf(doc);
-    if (close === -1) {
-      return { node: <span className="tok-str">{text === '' ? ' ' : text}</span>, doc };
-    }
-    const inside = text.slice(0, close + 3);
-    const rest = text.slice(close + 3);
-    return {
-      node: (
-        <>
-          <span className="tok-str">{inside}</span>
-          {hlTokens(rest)}
-        </>
-      ),
-      doc: null,
-    };
-  }
-  const m = findTriple(text);
-  if (!m) return { node: hlTokens(text), doc: null };
-  const after = text.indexOf(m.delim, m.idx + 3);
-  if (after !== -1) {
-    // opens and closes on the same line -> a normal (single-line) string
-    return {
-      node: (
-        <>
-          {hlTokens(text.slice(0, m.idx))}
-          <span className="tok-str">{text.slice(m.idx, after + 3)}</span>
-          {hlTokens(text.slice(after + 3))}
-        </>
-      ),
-      doc: null,
-    };
-  }
-  // opens a multi-line block: rest of the line is string, stay "in docstring"
-  return {
-    node: (
-      <>
-        {hlTokens(text.slice(0, m.idx))}
-        <span className="tok-str">{text.slice(m.idx)}</span>
-      </>
-    ),
-    doc: m.delim,
-  };
-}
-const SIGN = { same: ' ', del: '-', add: '+' } as const;
-
 /**
  * Renders the real line diff (unchanged lines as context, only true changes
- * colored). Emits BOTH a unified and a side-by-side layout from the same diff;
+ * colored), syntax-highlighted by Prism. The whole old/new blocks are
+ * highlighted (so multi-line constructs are correct) and the tokens are sliced
+ * back onto the diff lines. Emits BOTH a unified and a side-by-side layout;
  * CSS shows one based on `body.prl-split` (the "Diff view" setting).
  */
-function Diff({ patch }: { patch: string }): ReactElement {
+function Diff({ patch, file }: { patch: string; file: string }): ReactElement {
   const { oldL, newL } = parsePatch(patch);
-  const ops = diffLines(oldL, newL);
-  const rows = splitRows(ops);
+  const lang = langFor(file);
+  const oldHL = highlightLines(oldL.join('\n'), lang);
+  const newHL = highlightLines(newL.join('\n'), lang);
 
-  // Thread triple-quoted ("docstring") state across lines so Python multi-line
-  // strings highlight correctly. Unified is one stream; split has separate
-  // old/new streams.
-  let uDoc: string | null = null;
-  const unified = ops.map((op, i) => {
-    const r = hlLine(op.text, uDoc);
-    uDoc = r.doc;
-    return (
-      <div className={`diff-line ${op.type}`} key={i}>
-        <span className={`diff-sign ${op.type}`}>{SIGN[op.type]}</span>
-        {r.node}
-      </div>
-    );
-  });
-
-  let oDoc: string | null = null;
-  let nDoc: string | null = null;
-  const split = rows.map((r, i) => {
-    let oldNode: React.ReactNode = '';
-    if (r.old) {
-      const x = hlLine(r.old.text, oDoc);
-      oDoc = x.doc;
-      oldNode = (
-        <>
-          <span className={`diff-sign ${r.old.type}`}>{SIGN[r.old.type]}</span>
-          {x.node}
-        </>
-      );
+  // Attach each op's highlighted segments (from the side it belongs to).
+  let oi = 0;
+  let ni = 0;
+  const ops: Array<DiffOp & { segs: Seg[] }> = diffLines(oldL, newL).map((op) => {
+    let segs: Seg[];
+    if (op.type === 'add') segs = newHL[ni++] ?? [];
+    else if (op.type === 'del') segs = oldHL[oi++] ?? [];
+    else {
+      segs = oldHL[oi] ?? [];
+      oi++;
+      ni++;
     }
-    let newNode: React.ReactNode = '';
-    if (r.new) {
-      const y = hlLine(r.new.text, nDoc);
-      nDoc = y.doc;
-      newNode = (
-        <>
-          <span className={`diff-sign ${r.new.type}`}>{SIGN[r.new.type]}</span>
-          {y.node}
-        </>
-      );
-    }
-    return (
-      <div className="drow" key={i}>
-        <pre className={`dcell ${r.old ? r.old.type : 'empty'}`}>{oldNode}</pre>
-        <pre className={`dcell ${r.new ? r.new.type : 'empty'}`}>{newNode}</pre>
-      </div>
-    );
+    return { ...op, segs };
   });
+  const rows = splitRows(ops) as Array<{
+    old: (DiffOp & { segs: Seg[] }) | null;
+    new: (DiffOp & { segs: Seg[] }) | null;
+  }>;
 
   return (
     <div className="diff" data-diff="">
-      <pre className="diff-unified">{unified}</pre>
+      <pre className="diff-unified">
+        {ops.map((op, i) => (
+          <div className={`diff-line ${op.type}`} key={i}>
+            <span className={`diff-sign ${op.type}`}>{SIGN[op.type]}</span>
+            {renderSegs(op.segs)}
+          </div>
+        ))}
+      </pre>
       <div className="diff-split" aria-hidden="true">
-        {split}
+        {rows.map((r, i) => (
+          <div className="drow" key={i}>
+            <pre className={`dcell ${r.old ? r.old.type : 'empty'}`}>
+              {r.old ? (
+                <>
+                  <span className={`diff-sign ${r.old.type}`}>{SIGN[r.old.type]}</span>
+                  {renderSegs(r.old.segs)}
+                </>
+              ) : (
+                ''
+              )}
+            </pre>
+            <pre className={`dcell ${r.new ? r.new.type : 'empty'}`}>
+              {r.new ? (
+                <>
+                  <span className={`diff-sign ${r.new.type}`}>{SIGN[r.new.type]}</span>
+                  {renderSegs(r.new.segs)}
+                </>
+              ) : (
+                ''
+              )}
+            </pre>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -359,7 +249,7 @@ function StepCard({
                 +{h.added} −{h.removed}
               </span>
             </div>
-            {h.patch !== undefined && <Diff patch={h.patch} />}
+            {h.patch !== undefined && <Diff patch={h.patch} file={h.file} />}
           </div>
         ))}
       </div>

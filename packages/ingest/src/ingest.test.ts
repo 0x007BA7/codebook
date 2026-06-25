@@ -147,4 +147,27 @@ describe('SemIngestor availability gate + integration (§11.5)', () => {
     expect(laws.L1).toBe('pass');
     expect(laws.L3).toBe('pass');
   });
+
+  it.runIf(semHere)('reviews uncommitted working-tree changes (scope: working)', async () => {
+    const { mkdtempSync, writeFileSync: wf } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const { execFileSync } = await import('node:child_process');
+    const dir = mkdtempSync(join(tmpdir(), 'prl-wt-'));
+    const git = (...a: string[]) => execFileSync('git', a, { cwd: dir, stdio: 'ignore' });
+    git('init', '-q');
+    git('config', 'user.email', 't@t.co');
+    git('config', 'user.name', 't');
+    wf(join(dir, 'a.ts'), 'export function f() { return 1; }\n');
+    git('add', '-A');
+    git('commit', '-qm', 'base');
+    // edit f and add a new function g — but DON'T commit
+    wf(join(dir, 'a.ts'), 'export function f() { return 2; }\nexport function g() { return f(); }\n');
+
+    const g = await new SemIngestor().ingest({ cwd: dir, repo: dir, scope: 'working' });
+    expect(() => parseGraphInput(g)).not.toThrow();
+    const names = g.entities.map((e) => e.id).join(' ');
+    expect(names).toContain('::f');
+    expect(names).toContain('::g'); // the uncommitted new function is included
+    expect(g.pr.head).toBe('working tree');
+  });
 });
