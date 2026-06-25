@@ -4,7 +4,8 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { createElement } from 'react';
-import { ReadingPlanSchema } from '@prl/contracts';
+import { ReadingPlanSchema, type GraphInput } from '@prl/contracts';
+import { linearize } from '@prl/core';
 import { Spine, Legend } from './Spine.js';
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
@@ -97,6 +98,39 @@ describe('Spine (static markup, §8.2)', () => {
     expect(html).toContain('data-category="wiring"');
     // category drives the swatch color
     expect(renderToStaticMarkup(createElement(Legend))).toContain('swatch');
+  });
+
+  it('highlights a Python multi-line docstring as a string across lines', () => {
+    const g: GraphInput = {
+      schemaVersion: 1,
+      pr: { repo: 'r', base: 'b', head: 'h' },
+      entities: [
+        {
+          id: 'f.py::f',
+          name: 'f',
+          file: 'f.py',
+          kind: 'function',
+          change: 'added',
+          hunks: [
+            {
+              file: 'f.py',
+              startLine: 1,
+              endLine: 6,
+              added: 6,
+              removed: 0,
+              patch:
+                '+def f():\n+    """\n+    multi line\n+    docstring // not a comment\n+    """\n+    return 1',
+            },
+          ],
+        },
+      ],
+      edges: [],
+    };
+    const html = renderToStaticMarkup(createElement(Spine, { plan: linearize(g) }));
+    // docstring body is colored as a string, spanning lines…
+    expect(html).toMatch(/tok-str[^>]*>\s*docstring \/\/ not a comment/);
+    // …and the `//` inside it is NOT mistaken for a line comment
+    expect(html).not.toMatch(/tok-com[^>]*>\/\/ not a comment/);
   });
 
   it('renders every fixture without throwing', () => {
