@@ -4,6 +4,7 @@
 import * as React from 'react';
 import type { ReactElement } from 'react';
 import type { ReadingPlan, ReadingStep, Cluster, Category } from '@prl/contracts';
+import { parsePatch, diffLines, splitRows } from './linediff.js';
 
 void React;
 
@@ -109,34 +110,67 @@ function tokenizeCode(s: string): Tok[] {
   return out;
 }
 
+/** Syntax-highlight one line's text into spans. */
+function hl(text: string): React.ReactNode {
+  if (text === '') return ' ';
+  return tokenizeCode(text).map((tok, k) =>
+    tok.t === 'code' ? (
+      <React.Fragment key={k}>{tok.v}</React.Fragment>
+    ) : (
+      <span key={k} className={tok.t === 'com' ? 'tok-com' : 'tok-str'}>
+        {tok.v}
+      </span>
+    ),
+  );
+}
+const SIGN = { same: ' ', del: '-', add: '+' } as const;
+
+/**
+ * Renders the real line diff (unchanged lines as context, only true changes
+ * colored). Emits BOTH a unified and a side-by-side layout from the same diff;
+ * CSS shows one based on `body.prl-split` (the "Diff view" setting).
+ */
 function Diff({ patch }: { patch: string }): ReactElement {
-  const lines = patch.replace(/\n$/, '').split('\n');
+  const { oldL, newL } = parsePatch(patch);
+  const ops = diffLines(oldL, newL);
+  const rows = splitRows(ops);
   return (
-    <pre className="diff">
-      {lines.map((line, i) => {
-        const first = line[0];
-        const isSigned = first === '+' || first === '-' || first === ' ';
-        const sign = first === '+' ? 'add' : first === '-' ? 'del' : 'ctx';
-        const content = isSigned ? line.slice(1) : line;
-        const toks = tokenizeCode(content);
-        return (
-          <div className={`diff-line ${sign}`} key={i}>
-            <span className={`diff-sign ${sign}`}>{isSigned ? first : ''}</span>
-            {content === ''
-              ? ' '
-              : toks.map((tok, k) =>
-                  tok.t === 'code' ? (
-                    <React.Fragment key={k}>{tok.v}</React.Fragment>
-                  ) : (
-                    <span key={k} className={tok.t === 'com' ? 'tok-com' : 'tok-str'}>
-                      {tok.v}
-                    </span>
-                  ),
-                )}
+    <div className="diff" data-diff="">
+      <pre className="diff-unified">
+        {ops.map((op, i) => (
+          <div className={`diff-line ${op.type}`} key={i}>
+            <span className={`diff-sign ${op.type}`}>{SIGN[op.type]}</span>
+            {hl(op.text)}
           </div>
-        );
-      })}
-    </pre>
+        ))}
+      </pre>
+      <div className="diff-split" aria-hidden="true">
+        {rows.map((r, i) => (
+          <div className="drow" key={i}>
+            <pre className={`dcell ${r.old ? r.old.type : 'empty'}`}>
+              {r.old ? (
+                <>
+                  <span className={`diff-sign ${r.old.type}`}>{SIGN[r.old.type]}</span>
+                  {hl(r.old.text)}
+                </>
+              ) : (
+                ''
+              )}
+            </pre>
+            <pre className={`dcell ${r.new ? r.new.type : 'empty'}`}>
+              {r.new ? (
+                <>
+                  <span className={`diff-sign ${r.new.type}`}>{SIGN[r.new.type]}</span>
+                  {hl(r.new.text)}
+                </>
+              ) : (
+                ''
+              )}
+            </pre>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 

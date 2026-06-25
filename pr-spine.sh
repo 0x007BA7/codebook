@@ -31,6 +31,15 @@ INVOKE_DIR="$PWD"
 
 die() { echo "error: $*" >&2; exit 1; }
 opener() { case "$(uname -s)" in Darwin) open "$1";; *) xdg-open "$1" 2>/dev/null || echo "open: $1";; esac; }
+# Resolve a ref ($2) to a commit SHA in repo ($1), preferring the FRESH remote
+# (a local branch may be stale — GitHub diffs against the remote). Prints the SHA.
+resolve_ref() {
+  git -C "$1" fetch -q origin "$2" 2>/dev/null || true   # refresh origin/<ref>
+  git -C "$1" rev-parse --verify --quiet "origin/$2^{commit}" 2>/dev/null && return 0
+  git -C "$1" rev-parse --verify --quiet FETCH_HEAD 2>/dev/null && return 0
+  git -C "$1" rev-parse --verify --quiet "$2^{commit}" 2>/dev/null && return 0  # SHA / local fallback
+  return 1
+}
 
 # --- parse args -------------------------------------------------------------
 PR="" REPO="" FIXTURE="" BASE="" HEAD="HEAD" OUT="" NO_OPEN=""
@@ -81,13 +90,14 @@ command -v sem >/dev/null 2>&1 || die "the 'sem' CLI is required for real PRs.
 # We check out the PR head into a throwaway git worktree (your branch + WIP are
 # untouched) so both `sem diff` and `sem graph` see the right code state. --------
 ORIG_REPO="$REPO"
+USER_BASE="$BASE"   # an explicit --base overrides the PR's declared base
 if [ -n "$PR" ]; then
   command -v gh >/dev/null 2>&1 || die "GitHub 'gh' CLI is required for the PR-number form.
   install it (https://cli.github.com) and run 'gh auth login', or pass --base/--head yourself."
   echo "==> looking up PR #$PR via gh…"
-  if ! read -r BASE_BRANCH HEAD_BRANCH HEAD_OID < <(cd "$ORIG_REPO" && \
-      gh pr view "$PR" --json baseRefName,headRefName,headRefOid \
-        -q '[.baseRefName,.headRefName,.headRefOid]|@tsv' 2>/dev/null); then
+  if ! read -r BASE_BRANCH HEAD_BRANCH HEAD_OID BASE_OID < <(cd "$ORIG_REPO" && \
+      gh pr view "$PR" --json baseRefName,headRefName,headRefOid,baseRefOid \
+        -q '[.baseRefName,.headRefName,.headRefOid,.baseRefOid]|@tsv' 2>/dev/null); then
     die "could not read PR #$PR via gh (is gh authenticated for this repo?)."
   fi
   [ -n "${HEAD_OID:-}" ] || die "could not resolve PR #$PR head commit."
@@ -96,9 +106,22 @@ if [ -n "$PR" ]; then
     || git -C "$ORIG_REPO" fetch -q origin "pull/$PR/head" 2>/dev/null || true
   git -C "$ORIG_REPO" rev-parse --verify --quiet "$HEAD_OID^{commit}" >/dev/null 2>&1 \
     || die "could not fetch PR head commit $HEAD_OID."
-  git -C "$ORIG_REPO" rev-parse --verify --quiet "origin/$BASE_BRANCH" >/dev/null 2>&1 \
-    || git -C "$ORIG_REPO" fetch -q origin "$BASE_BRANCH" 2>/dev/null || true
-  BASE="$(git -C "$ORIG_REPO" merge-base "origin/$BASE_BRANCH" "$HEAD_OID" 2>/dev/null || echo "origin/$BASE_BRANCH")"
+  # Base ref to diff against; default is the PR's own base branch. Either way we
+  # diff from the MERGE-BASE with the PR head (three-dot, like GitHub's PR view),
+  # so commits the base has but the PR doesn't aren't counted as changes.
+  if [ -n "$USER_BASE" ]; then
+    BASE_REF="$(resolve_ref "$ORIG_REPO" "$USER_BASE")" \
+      || die "could not resolve --base '$USER_BASE' (tried origin/$USER_BASE, FETCH_HEAD, and the local ref)."
+    BASE_LABEL="$USER_BASE [override]"
+  else
+    # Use GitHub's own base commit (baseRefOid); fetch the base branch so it's
+    # present locally. The local branch of the same name may be stale.
+    git -C "$ORIG_REPO" rev-parse --verify --quiet "$BASE_OID^{commit}" >/dev/null 2>&1 \
+      || git -C "$ORIG_REPO" fetch -q origin "$BASE_BRANCH" 2>/dev/null || true
+    BASE_REF="$BASE_OID"
+    BASE_LABEL="$BASE_BRANCH"
+  fi
+  BASE="$(git -C "$ORIG_REPO" merge-base "$BASE_REF" "$HEAD_OID" 2>/dev/null || echo "$BASE_REF")"
   HEAD="$HEAD_OID"
   WT="${TMPDIR:-/tmp}/prl-wt-$PR"
   git -C "$ORIG_REPO" worktree remove --force "$WT" >/dev/null 2>&1 || true
@@ -108,8 +131,15 @@ if [ -n "$PR" ]; then
   trap cleanup_wt EXIT
   REPO="$WT"
   OUT="${OUT:-${TMPDIR:-/tmp}/prl-pr-$PR.html}"
-  echo "==> PR #$PR: base $BASE_BRANCH (${BASE:0:9}) .. head ${HEAD_OID:0:9}"
+  echo "==> PR #$PR: base $BASE_LABEL (${BASE:0:9}) .. head ${HEAD_OID:0:9}"
   echo "    (first run on a large repo can take ~a minute while sem indexes the worktree)"
+fi
+
+# --- explicit --base outside PR mode: also diff from the merge-base (three-dot) ---
+if [ -z "$PR" ] && [ -n "$USER_BASE" ]; then
+  BR="$(resolve_ref "$REPO" "$USER_BASE")" || die "could not resolve --base '$USER_BASE'."
+  BASE="$(git -C "$REPO" merge-base "$BR" "$HEAD" 2>/dev/null || echo "$BR")"
+  echo "==> base $USER_BASE (merge-base ${BASE:0:9}) .. $HEAD"
 fi
 
 # --- no PR #, no base given: auto-detect base from the remote's default branch ---

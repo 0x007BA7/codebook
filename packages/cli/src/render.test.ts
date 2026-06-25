@@ -76,16 +76,17 @@ describe('renderPlanHtml standalone interactions (jsdom)', () => {
     expect(doc.querySelectorAll('.embed').length).toBe(0);
   });
 
-  it('"focus in main" jumps to and flashes the target step', () => {
+  it("a preview's title arrow jumps to and flashes the real step in the main list", () => {
     const { dom, doc } = renderInDom('rate-limit');
     const link = doc.querySelector('a.dep-link') as HTMLElement;
-    const targetSel = link.getAttribute('href')!; // #step-N
+    const targetSel = link.getAttribute('href')!; // #step-N (the real step in main)
     link.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
-    const focus = doc.querySelector('.embed-focus') as HTMLElement;
-    expect(focus).toBeTruthy();
+    // the ↗ arrow inside the preview clone (no dedicated "focus in main" button)
+    const arrow = doc.querySelector('.embed a.step-focus') as HTMLElement;
+    expect(arrow).toBeTruthy();
     const target = doc.querySelector(targetSel) as HTMLElement;
     expect(target.classList.contains('prl-flash')).toBe(false);
-    focus.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
+    arrow.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
     expect(target.classList.contains('prl-flash')).toBe(true);
     expect(target.hasAttribute('open')).toBe(true);
   });
@@ -101,6 +102,32 @@ describe('renderPlanHtml standalone interactions (jsdom)', () => {
     box.checked = true;
     box.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
     expect(text()).toBe(`1 reviewed · ${plan.stats.entityCount - 1} unreviewed`);
+  });
+
+  it('"Diff view" setting toggles side-by-side (body class + both layouts present)', () => {
+    const { dom, doc } = renderInDom('rate-limit');
+    expect(doc.querySelectorAll('input[name="prl-diff"]').length).toBe(2);
+    // both layouts are emitted from the same diff
+    expect(doc.querySelector('.diff .diff-unified')).toBeTruthy();
+    expect(doc.querySelector('.diff .diff-split .drow')).toBeTruthy();
+    expect(doc.body.classList.contains('prl-split')).toBe(false); // unified default
+    const split = doc.querySelector('input[name="prl-diff"][value="split"]') as HTMLInputElement;
+    split.checked = true;
+    split.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+    expect(doc.body.classList.contains('prl-split')).toBe(true);
+  });
+
+  it('"hide reviewed steps" toggles a body class and ships the scoped CSS', () => {
+    const { dom, doc } = renderInDom('rate-limit');
+    const hide = doc.getElementById('prl-hide-reviewed') as HTMLInputElement;
+    expect(hide).toBeTruthy();
+    expect(doc.body.classList.contains('prl-hide-reviewed')).toBe(false);
+    hide.checked = true;
+    hide.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+    expect(doc.body.classList.contains('prl-hide-reviewed')).toBe(true);
+    // the hide rule is scoped to canonical rows (> .step-card), not previews
+    const css = doc.querySelector('style')!.textContent!;
+    expect(css).toContain('body.prl-hide-reviewed .step-row:has(> .step-card .reviewed:checked)');
   });
 
   it('title arrow focuses its step and does NOT toggle the card', () => {

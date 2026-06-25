@@ -111,6 +111,15 @@ body { margin: 0; background: var(--bg); color: var(--fg); }
   background: #d8f3df; border-color: #1a7f37; color: #1a7f37;
 }
 
+/* "hide reviewed steps" setting: hide reviewed CANONICAL rows (and fully-
+   reviewed file groups) from the main panel only. The `> .step-card` scope
+   leaves dependency previews (.embed clones, the dock) untouched. */
+body.prl-hide-reviewed .step-row:has(> .step-card .reviewed:checked) { display: none; }
+body.prl-hide-reviewed
+  .file-group:not(:has(> .step-row > .step-card .reviewed:not(:checked))) {
+  display: none;
+}
+
 /* preview of a dependency (popped below, or docked right). Injected at runtime. */
 .embed { margin: 2px 0 8px 44px; border-left: 3px solid #9a7bbf; padding-left: 8px; }
 .embed-label {
@@ -120,11 +129,6 @@ body { margin: 0; background: var(--bg); color: var(--fg); }
 .embed .step-card { margin: 0; }
 .embed-label { display: flex; align-items: center; gap: 8px; }
 .embed-label > span { flex: 1; min-width: 0; }
-.embed-focus {
-  border: 1px solid #cfe0ee; background: #eaf2f8; cursor: pointer;
-  font-size: 11px; line-height: 1; padding: 2px 8px; border-radius: 3px; color: #1f5d8a;
-}
-.embed-focus:hover { background: #d6e7f5; }
 .embed-close {
   border: 1px solid var(--line); background: #fff; cursor: pointer;
   font-size: 14px; font-weight: 700; line-height: 1; padding: 2px 8px;
@@ -141,7 +145,7 @@ body { margin: 0; background: var(--bg); color: var(--fg); }
 }
 .prl-progress:hover { opacity: 0.9; }
 .prl-progress.prl-complete { background: #1a7f37; border-color: #1a7f37; }
-body.prl-docked .prl-progress { right: calc(var(--prl-dock-w, 480px) + 16px); }
+/* z-index 30 keeps it above the dock (20), so it stays put when the dock opens */
 
 /* transient highlight when "focus in main" jumps to a step (flat: no shadow) */
 .prl-flash { animation: prl-flash 1.4s ease-out; }
@@ -197,9 +201,12 @@ body.prl-docked .app { margin-left: 24px; margin-right: 24px; }
 .hunk-head { display: flex; justify-content: space-between; }
 .hunk code { color: var(--fg); }
 
-/* actual diff text rendered on expand (§8.2). add/del shown via background;
-   text is syntax-highlighted (comments/strings) like a real diff viewer. */
-.diff { margin: 6px 0 2px; font-size: 12px; line-height: 1.5; overflow-x: auto; white-space: pre; color: #1f2328; }
+/* actual diff text rendered on expand (§8.2). Real line diff: unchanged lines
+   are context, only true changes are colored; text is syntax-highlighted.
+   Both a unified and a side-by-side layout are emitted; the "Diff view" setting
+   (body.prl-split) chooses which is shown. */
+.diff { margin: 6px 0 2px; font-size: 12px; line-height: 1.5; color: #1f2328; }
+.diff-unified { margin: 0; overflow-x: auto; white-space: pre; }
 .diff-line { padding: 0 6px; }
 .diff-line.add { background: #e6ffec; }
 .diff-line.del { background: #ffebe9; }
@@ -208,3 +215,16 @@ body.prl-docked .app { margin-left: 24px; margin-right: 24px; }
 .diff-sign.del { color: #b02a21; font-weight: 700; }
 .tok-com { color: #7d8590; font-style: italic; }
 .tok-str { color: #9a5b00; }
+
+/* side-by-side layout (hidden until the setting turns it on) */
+.diff-split { display: none; }
+.diff-split .drow { display: grid; grid-template-columns: 1fr 1fr; }
+.diff-split .dcell {
+  margin: 0; padding: 0 6px; white-space: pre; overflow-x: auto;
+  border-left: 1px solid var(--line);
+}
+.diff-split .dcell.del { background: #ffebe9; }
+.diff-split .dcell.add { background: #e6ffec; }
+.diff-split .dcell.empty { background: #fafbfc; }
+body.prl-split .diff-unified { display: none; }
+body.prl-split .diff-split { display: block; }

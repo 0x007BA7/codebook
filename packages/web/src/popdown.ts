@@ -246,14 +246,8 @@ export function initSpinePopdowns(): void {
     label.className = 'embed-label';
     const span = document.createElement('span');
     span.textContent = '↑ step ' + depOrder + ' — dependency';
-    // "focus in main": scroll the main spine to this step and flash it.
-    const focus = document.createElement('button');
-    focus.className = 'embed-focus';
-    focus.textContent = '⤢ focus in main';
-    focus.title = 'jump to step ' + depOrder + ' in the main list';
-    focus.addEventListener('click', function () {
-      focusStep(depOrder);
-    });
+    // (No "focus in main" button: the ↗ arrow on the clone's title already
+    // jumps to the real step in the main list.)
     const close = document.createElement('button');
     close.className = 'embed-close';
     close.textContent = '×';
@@ -264,7 +258,6 @@ export function initSpinePopdowns(): void {
       updateDock();
     });
     label.appendChild(span);
-    label.appendChild(focus);
     label.appendChild(close);
 
     const clone = target.cloneNode(true) as HTMLElement;
@@ -357,6 +350,28 @@ export function initSpinePopdowns(): void {
       const rb = rankR[i] as HTMLInputElement;
       rb.checked = rb.value === getRank();
     }
+    let hide = false;
+    try {
+      hide = localStorage.getItem('prl-hide-reviewed') === '1';
+    } catch (_e) {
+      /* ignore */
+    }
+    const hideBox = document.getElementById('prl-hide-reviewed') as HTMLInputElement | null;
+    if (hideBox) hideBox.checked = hide;
+    document.body.classList.toggle('prl-hide-reviewed', hide); // CSS hides reviewed rows
+
+    let split = false;
+    try {
+      split = localStorage.getItem('prl-diff') === 'split';
+    } catch (_e) {
+      /* ignore */
+    }
+    const diffR = document.querySelectorAll('input[name="prl-diff"]');
+    for (let i = 0; i < diffR.length; i++) {
+      const rb = diffR[i] as HTMLInputElement;
+      rb.checked = rb.value === (split ? 'split' : 'unified');
+    }
+    document.body.classList.toggle('prl-split', split); // CSS picks unified vs side-by-side
   }
   if (!document.getElementById('prl-settings') && spine.parentNode) {
     const panel = document.createElement('details');
@@ -371,8 +386,40 @@ export function initSpinePopdowns(): void {
       '<div class="prl-setting"><span class="prl-setting-label">Preview dependency as</span>' +
       '<label><input type="radio" name="prl-mode" value="below"> drop below</label>' +
       '<label><input type="radio" name="prl-mode" value="right"> drop to the right</label></div>' +
+      '<div class="prl-setting"><span class="prl-setting-label">Diff view</span>' +
+      '<label><input type="radio" name="prl-diff" value="unified"> unified</label>' +
+      '<label><input type="radio" name="prl-diff" value="split"> side-by-side</label></div>' +
+      '<div class="prl-setting"><span class="prl-setting-label">Main panel</span>' +
+      '<label><input type="checkbox" id="prl-hide-reviewed"> hide reviewed steps</label></div>' +
       '</div>';
     spine.parentNode.insertBefore(panel, spine);
+
+    const diffRadios = panel.querySelectorAll('input[name="prl-diff"]');
+    for (let i = 0; i < diffRadios.length; i++) {
+      const r = diffRadios[i];
+      if (!r) continue;
+      r.addEventListener('change', function (this: HTMLInputElement) {
+        if (!this.checked) return;
+        try {
+          localStorage.setItem('prl-diff', this.value);
+        } catch (_e) {
+          /* ignore */
+        }
+        document.body.classList.toggle('prl-split', this.value === 'split');
+      });
+    }
+
+    const hideBox = panel.querySelector('#prl-hide-reviewed');
+    if (hideBox) {
+      hideBox.addEventListener('change', function (this: HTMLInputElement) {
+        try {
+          localStorage.setItem('prl-hide-reviewed', this.checked ? '1' : '0');
+        } catch (_e) {
+          /* ignore */
+        }
+        document.body.classList.toggle('prl-hide-reviewed', this.checked);
+      });
+    }
 
     const modeRadios = panel.querySelectorAll('input[name="prl-mode"]');
     for (let i = 0; i < modeRadios.length; i++) {
