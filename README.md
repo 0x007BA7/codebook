@@ -14,9 +14,18 @@ randomness — the same PR always produces the same plan.
 ## Quick start
 
 ```bash
-make install                  # deps + put `codebook` (and `cb`) on your PATH
+curl -fsSL https://raw.githubusercontent.com/rzlim08/codebook/main/install.sh | bash
 codebook --fixture rate-limit # see a reading spine — no sem/gh needed
 ```
+
+The installer needs `git`, `node` 20+, and `npm` already present (it won't
+install a toolchain). It clones into `~/.local/share/codebook`, installs
+runtime deps with `npm ci --omit=dev` (~37 MB, all prebuilt — **no compile
+step**), and symlinks `codebook` (and `cb`) into `~/.local/bin`. Re-running it
+updates in place; pin a ref with `CODEBOOK_REF=<branch|tag|sha>`.
+
+Working from a clone instead? `make install` does the same symlinking. To
+uninstall: `rm -rf ~/.local/share/codebook ~/.local/bin/codebook ~/.local/bin/cb`.
 
 That opens a worked example offline. To use it on real code, install
 [`sem`](https://github.com/Ataraxy-Labs/sem) (`brew install sem-cli`), then from

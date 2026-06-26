@@ -107,15 +107,24 @@ command -v node >/dev/null 2>&1 || die "node not found. Install Node.js 20+."
 command -v npm  >/dev/null 2>&1 || die "npm not found."
 NODE_MAJOR="$(node -p 'process.versions.node.split(".")[0]' 2>/dev/null || echo 0)"
 [ "$NODE_MAJOR" -ge 20 ] 2>/dev/null || echo "warning: Node $NODE_MAJOR detected; 20+ recommended (--watch needs recursive fs.watch)." >&2
-if [ ! -d "$PROJECT_DIR/node_modules" ]; then
-  echo "==> first-time setup: installing dependencies (~30s, one time only)…"
-  ( cd "$PROJECT_DIR" && npm install )
+# Heal on the tsx binary, not just the dir: a half-populated node_modules (e.g.
+# an interrupted install) is repaired too. --omit=dev keeps it to runtime deps.
+if [ ! -x "$PROJECT_DIR/node_modules/.bin/tsx" ]; then
+  echo "==> first-time setup: installing dependencies (~37 MB, one time only)…"
+  ( cd "$PROJECT_DIR" && { npm ci --omit=dev 2>/dev/null || npm install --omit=dev; } )
+fi
+# Prefer the tsx we installed locally; fall back to npx only if it's missing.
+# An array so a PROJECT_DIR with spaces and the two-word "npx tsx" both work.
+if [ -x "$PROJECT_DIR/node_modules/.bin/tsx" ]; then
+  TSX=("$PROJECT_DIR/node_modules/.bin/tsx")
+else
+  TSX=(npx tsx)
 fi
 
 # --- fixture mode (no sem/gh) ----------------------------------------------
 if [ -n "$FIXTURE" ]; then
   OUT="${OUT:-$PROJECT_DIR/$FIXTURE-spine.html}"
-  ( cd "$PROJECT_DIR" && npx tsx "$CLI" render --fixture "$FIXTURE" --out "$OUT" )
+  ( cd "$PROJECT_DIR" && "${TSX[@]}" "$CLI" render --fixture "$FIXTURE" --out "$OUT" )
   [ -n "$NO_OPEN" ] || { echo "==> opening $OUT"; opener "$OUT"; }
   exit 0
 fi
@@ -218,8 +227,8 @@ fi
 if [ -n "$WATCH" ]; then
   # live-reload server; re-renders on file change. Best with --working/--staged/--tree.
   [ -n "$NO_OPEN" ] && ARGS+=(--no-open)
-  ( cd "$PROJECT_DIR" && SEM_NO_TELEMETRY=1 npx tsx "$CLI" watch "${ARGS[@]}" )
+  ( cd "$PROJECT_DIR" && SEM_NO_TELEMETRY=1 "${TSX[@]}" "$CLI" watch "${ARGS[@]}" )
 else
-  ( cd "$PROJECT_DIR" && SEM_NO_TELEMETRY=1 npx tsx "$CLI" render --out "$OUT" "${ARGS[@]}" )
+  ( cd "$PROJECT_DIR" && SEM_NO_TELEMETRY=1 "${TSX[@]}" "$CLI" render --out "$OUT" "${ARGS[@]}" )
   [ -n "$NO_OPEN" ] || { echo "==> opening $OUT"; opener "$OUT"; }
 fi
