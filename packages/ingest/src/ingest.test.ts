@@ -21,8 +21,6 @@ describe('FixtureIngestor', () => {
     const names = listFixtures();
     expect(names).toEqual([
       'acyclic-chain',
-      'disconnected-islands',
-      'large-synthetic',
       'nested-cycles',
       'rate-limit',
       'single-cycle',

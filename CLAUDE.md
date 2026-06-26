@@ -24,7 +24,6 @@ is the single gate. Then run `make eval` and read `eval/scorecard.json`.
 | `make demo` | server + web on the rate-limit fixture, opens the browser |
 | `make golden-update` | regenerate every `expected.plan.json` (review the diff!) |
 | `make new-fixture name=foo` | scaffold a fixture + generate its golden |
-| `make gen-large` | regenerate the seeded `large-synthetic` input |
 | `make status` | regenerate `STATUS.md` by running the smoke checks |
 
 ## Definition of correct — the invariants (§10)
@@ -69,8 +68,7 @@ golden tests, and the eval harness all use it.
 Live in `fixtures/<case>/` as `input.graph.json` + `expected.plan.json`. Add one
 with `make new-fixture name=...`. **Prefer fixing the algorithm over editing a
 golden.** Only update goldens via `make golden-update`, and justify the change in
-the commit body. `large-synthetic` is generated from a fixed seed
-(`scripts/gen-large.ts`).
+the commit body.
 
 ## Portability rule (§4, enforced by §11.6)
 

@@ -18,7 +18,6 @@
     "serve": "tsx packages/server/src/main.ts",
     "golden-update": "tsx scripts/golden-update.ts",
     "new-fixture": "tsx scripts/new-fixture.ts",
-    "gen-large": "tsx scripts/gen-large.ts",
     "status": "tsx scripts/status.ts"
   },
   "devDependencies": {

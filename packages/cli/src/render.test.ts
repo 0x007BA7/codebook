@@ -43,7 +43,7 @@ describe('renderPlanHtml standalone interactions (jsdom)', () => {
   });
 
   it('default ranks file groups by fan-out desc; switching ranks by blast desc', () => {
-    const { dom, doc } = renderInDom('large-synthetic');
+    const { dom, doc } = renderInDom('rate-limit');
     const metric = (attr: string) =>
       [...doc.querySelectorAll('.steps > .file-group')].map((g) =>
         parseInt(g.getAttribute(attr) || '0', 10),

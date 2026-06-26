@@ -2,7 +2,7 @@
 # Every target exits nonzero on failure so the agent loop can read exit codes.
 .DEFAULT_GOAL := help
 .PHONY: help setup install uninstall build typecheck lint test e2e verify eval serve demo \
-        golden-update new-fixture gen-large status clean
+        golden-update new-fixture status clean
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -56,9 +56,6 @@ golden-update: ## Regenerate every fixture's expected.plan.json (review the diff
 
 new-fixture: ## Scaffold a fixture: make new-fixture name=foo
 	npx tsx scripts/new-fixture.ts $(name)
-
-gen-large: ## Regenerate the seeded large-synthetic fixture input
-	npx tsx scripts/gen-large.ts
 
 status: ## Regenerate STATUS.md by running the milestone smoke checks
 	npx tsx scripts/status.ts

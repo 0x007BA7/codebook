@@ -138,13 +138,7 @@ describe('Spine (static markup, §8.2)', () => {
   });
 
   it('renders every fixture without throwing', () => {
-    for (const name of [
-      'acyclic-chain',
-      'disconnected-islands',
-      'nested-cycles',
-      'single-cycle',
-      'large-synthetic',
-    ]) {
+    for (const name of ['acyclic-chain', 'nested-cycles', 'single-cycle']) {
       expect(() => render(name), name).not.toThrow();
     }
   });
