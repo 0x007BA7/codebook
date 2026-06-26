@@ -56,7 +56,7 @@ body { margin: 0; background: var(--bg); color: var(--fg); }
 .step-card { flex: 1 1 auto; min-width: 0; border: 1px solid var(--line); background: #fff; margin: 6px 0; }
 .step-card > summary {
   display: grid;
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: 1fr auto;
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
@@ -65,12 +65,21 @@ body { margin: 0; background: var(--bg); color: var(--fg); }
 }
 .step-card > summary::-webkit-details-marker { display: none; }
 .step-title { min-width: 0; display: inline-flex; align-items: baseline; gap: 6px; }
-.step-name { font-weight: 600; }
+.step-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.step-file { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.summary-meta { display: inline-flex; align-items: center; gap: 10px; white-space: nowrap; }
+.cat-tag { font-size: 11px; text-transform: lowercase; }
 .step-focus {
-  text-decoration: none; color: #1f5d8a; font-size: 12px; cursor: pointer;
-  opacity: 0.55; flex: 0 0 auto;
+  text-decoration: none; color: #1f5d8a; font-size: 13px; cursor: pointer;
+  opacity: 0.75; flex: 0 0 auto; padding: 2px 4px; border-radius: 3px;
 }
-.step-focus:hover { opacity: 1; }
+.step-focus:hover, .step-focus:focus-visible { opacity: 1; background: #eaf2f8; }
+
+/* visible keyboard focus everywhere (WCAG 2.4.7) — flat 2px ring */
+:focus-visible { outline: 2px solid #1f5d8a; outline-offset: 2px; }
+.step-card > summary:focus-visible { outline-offset: -2px; }
+.reviewed { width: 15px; height: 15px; }
+.reviewed-wrap { padding: 2px 0; }
 .step-delta { font-size: 12px; white-space: nowrap; }
 .cycle-badge {
   font-size: 11px; color: #6a3a8a; background: rgba(154, 123, 191, 0.12);
@@ -88,7 +97,7 @@ body { margin: 0; background: var(--bg); color: var(--fg); }
 .dep-link { color: #1f5d8a; text-decoration: none; cursor: pointer; }
 .dep-link:hover { text-decoration: underline; }
 .dep-link.dep-open { font-weight: 600; }
-.deps-hint { color: var(--rail); font-style: italic; }
+.deps-hint { color: var(--muted); font-style: italic; }
 
 /* "used by" dependents dropdown */
 .dependents > summary {
@@ -215,7 +224,7 @@ body.prl-docked .app { margin-left: 24px; margin-right: 24px; }
 .diff-sign.del { color: #b02a21; font-weight: 700; }
 
 /* Prism syntax theme (compact, GitHub-light palette; readable over add/del tints) */
-.token.comment, .token.prolog, .token.doctype, .token.cdata { color: #6e7781; font-style: italic; }
+.token.comment, .token.prolog, .token.doctype, .token.cdata { color: #5a6168; font-style: italic; }
 .token.punctuation { color: #57606a; }
 .token.keyword, .token.boolean, .token.atrule, .token.important, .token.tag, .token.selector { color: #cf222e; }
 .token.operator, .token.entity, .token.url { color: #0550ae; }
