@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { JSDOM, VirtualConsole } from 'jsdom';
-import { linearize } from '@prl/core';
-import { loadFixtureInput } from '@prl/ingest';
+import { linearize } from '@codebook/core';
+import { loadFixtureInput } from '@codebook/ingest';
 import { renderPlanHtml } from './render.js';
 
 // Renders a fixture plan to standalone HTML and runs its injected script in a

@@ -1,7 +1,7 @@
 import Fastify, { type FastifyInstance, type FastifyReply } from 'fastify';
 import { ZodError } from 'zod';
-import { linearize } from '@prl/core';
-import { ReadingPlanSchema, type ReadingPlan } from '@prl/contracts';
+import { linearize } from '@codebook/core';
+import { ReadingPlanSchema, type ReadingPlan } from '@codebook/contracts';
 import {
   FixtureIngestor,
   SemIngestor,
@@ -9,7 +9,7 @@ import {
   listFixtures,
   type Ingestor,
   type IngestOpts,
-} from '@prl/ingest';
+} from '@codebook/ingest';
 
 export interface PlanRequest extends IngestOpts {
   ingestor?: 'sem' | 'fixture';

@@ -1,4 +1,4 @@
-import type { Entity } from '@prl/contracts';
+import type { Entity } from '@codebook/contracts';
 
 // ============================================================================
 // Sort keys (§6, Appendix B) — the single source of truth for tiebreaking.

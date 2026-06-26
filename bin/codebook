@@ -1,24 +1,24 @@
 #!/usr/bin/env bash
 #
-# prl-review — turn a PR into a reading-spine HTML page and open it.
+# codebook — turn a PR / local diff / directory into a reading-spine HTML page.
 #
-# Typical use (after `make install` in the prl-linearizer repo):
+# Typical use (after `make install` in the codebook repo):
 #   cd /path/to/some/clone
 #   gh pr checkout 1234          # check out the PR branch
-#   prl-review 1234              # opens the reading spine for that PR
+#   codebook 1234                # opens the reading spine for that PR
 #
 # Other forms:
-#   prl-review                   # review the current branch vs its base (no PR #)
-#   prl-review --working         # review your uncommitted changes (vs HEAD), no gh
-#   prl-review --staged          # review only staged changes
-#   prl-review --tree [PATH]     # read a whole dir/package in dependency order (no diff)
-#   prl-review --working --watch # live-reloading server; re-renders as you edit
-#   prl-review --base origin/main --head HEAD
-#   prl-review <repo-dir> [--base <ref>] [--head <ref>]
-#   prl-review --fixture rate-limit   # built-in example, no sem/gh needed
-#   prl-review 1234 --out review.html # write to a file instead of a temp file
+#   codebook                     # review the current branch vs its base (no PR #)
+#   codebook --working           # review your uncommitted changes (vs HEAD), no gh
+#   codebook --staged            # review only staged changes
+#   codebook --tree [PATH]       # read a whole dir/package in dependency order (no diff)
+#   codebook --working --watch   # live-reloading server; re-renders as you edit
+#   codebook --base origin/main --head HEAD
+#   codebook <repo-dir> [--base <ref>] [--head <ref>]
+#   codebook --fixture rate-limit   # built-in example, no sem/gh needed
+#   codebook 1234 --out review.html # write to a file instead of a temp file
 #
-# Requires: node, npm. PRs also require `sem` (brew install sem-cli);
+# Requires: node, npm. PRs/diffs also require `sem` (brew install sem-cli);
 # the PR-number form also requires GitHub `gh`.
 set -euo pipefail
 
@@ -29,12 +29,40 @@ while [ -L "$SOURCE" ]; do
   SOURCE="$(readlink "$SOURCE")"
   [[ "$SOURCE" != /* ]] && SOURCE="$D/$SOURCE"
 done
-PROJECT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+PROJECT_DIR="$(cd -P "$(dirname "$SOURCE")/.." && pwd)"  # repo root (script lives in bin/)
 CLI="$PROJECT_DIR/packages/cli/src/main.ts"
 INVOKE_DIR="$PWD"
 
 die() { echo "error: $*" >&2; exit 1; }
 opener() { case "$(uname -s)" in Darwin) open "$1";; *) xdg-open "$1" 2>/dev/null || echo "open: $1";; esac; }
+
+usage() {
+  cat <<'EOF'
+codebook — render a "reading spine": code in dependency order, read top-to-bottom.
+
+USAGE
+  codebook [SOURCE] [OPTIONS]
+
+SOURCE (pick one; default = current branch vs its base)
+  <PR-number>            review a GitHub PR, e.g.  codebook 1234   (needs gh)
+  --working              your uncommitted changes vs HEAD          (no gh)
+  --staged               only staged changes
+  --tree [PATH]          read a dir/package in dependency order (no diff)
+  --base <ref> --head <ref>   an explicit ref range
+  --fixture <name>       a built-in example (no sem/gh needed)
+  <repo-dir>             review a checkout elsewhere
+
+OPTIONS
+  --watch                live-reloading server; re-renders as you edit
+  --out <file>           write the HTML to a file (default: a temp file)
+  --no-open              don't open the browser
+  --max <n>              tree-view entity cap (default 4000; 0 = no cap)
+  -h, --help             show this help
+
+Requires node 20+ and npm; real repos need `sem` (brew install sem-cli),
+and the PR-number form also needs GitHub `gh`.
+EOF
+}
 # Resolve a ref ($2) to a commit SHA in repo ($1), preferring the FRESH remote
 # (a local branch may be stale — GitHub diffs against the remote). Prints the SHA.
 resolve_ref() {
@@ -59,8 +87,8 @@ while [ $# -gt 0 ]; do
     --max)     MAXENT="${2:-}"; shift 2;;
     --watch)   WATCH=1; shift;;
     --no-open) NO_OPEN=1; shift;;
-    -h|--help) sed -n '2,30p' "$0"; exit 0;;
-    -*)        die "unknown flag: $1";;
+    -h|--help) usage; exit 0;;
+    -*)        usage >&2; die "unknown flag: $1";;
     *)
       if [[ "$1" =~ ^[0-9]+$ ]]; then PR="$1"; else REPO="$1"; fi
       shift;;
@@ -80,7 +108,7 @@ command -v npm  >/dev/null 2>&1 || die "npm not found."
 NODE_MAJOR="$(node -p 'process.versions.node.split(".")[0]' 2>/dev/null || echo 0)"
 [ "$NODE_MAJOR" -ge 20 ] 2>/dev/null || echo "warning: Node $NODE_MAJOR detected; 20+ recommended (--watch needs recursive fs.watch)." >&2
 if [ ! -d "$PROJECT_DIR/node_modules" ]; then
-  echo "==> installing prl-linearizer dependencies (first run)…"
+  echo "==> first-time setup: installing dependencies (~30s, one time only)…"
   ( cd "$PROJECT_DIR" && npm install )
 fi
 
@@ -169,7 +197,7 @@ if [ -z "$SCOPE" ] && [ -z "$BASE" ]; then
   fi
 fi
 
-OUT="${OUT:-$REPO/pr-spine.html}"
+OUT="${OUT:-$REPO/codebook-spine.html}"
 # Mode-specific args (scope / refs / title), shared by render and watch.
 ARGS=(--repo "$REPO" --ingestor sem)
 if [ "$SCOPE" = "tree" ]; then

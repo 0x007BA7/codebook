@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseGraphInput, type GraphInput } from '@prl/contracts';
+import { parseGraphInput, type GraphInput } from '@codebook/contracts';
 import type { Ingestor, IngestOpts } from './types.js';
 
 /** Repo-root fixtures/ directory, resolved relative to this source file. */

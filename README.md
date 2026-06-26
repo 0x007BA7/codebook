@@ -14,13 +14,21 @@ randomness — the same PR always produces the same plan.
 ## Quick start
 
 ```bash
-make setup     # install deps (needs network once)
-make verify    # the gate: typecheck + lint + all tests   <-- start here
-make eval      # linearize every fixture -> eval/report.html (open it!)
-make demo      # server + web on the rate-limit fixture, opens the browser
+make install                  # deps + put `codebook` (and `cb`) on your PATH
+codebook --fixture rate-limit # see a reading spine — no sem/gh needed
 ```
 
-`make verify` and `make eval` run entirely offline with no external binaries.
+That opens a worked example offline. To use it on real code, install
+[`sem`](https://github.com/Ataraxy-Labs/sem) (`brew install sem-cli`), then from
+any repo:
+
+```bash
+codebook --working    # review your uncommitted changes
+codebook 1234         # review a GitHub PR (needs `gh`)
+codebook --tree src   # read a package in dependency order
+```
+
+(Developing Codebook itself? See [Developing](#developing) for the `make` loop.)
 
 ## What to look at first
 
@@ -76,30 +84,30 @@ the entity diff + dependency graph, and GitHub [`gh`](https://cli.github.com)
 for the PR-number lookup.
 
 ```bash
-# 1. install this tool — puts `prl-review` on your PATH
+# 1. install this tool — puts `codebook` on your PATH
 brew install sem-cli                  # the diff/graph backend (26 languages)
 git clone <this-repo> && cd <this-repo>
-make install                          # npm install + symlink `prl-review`
+make install                          # npm install + symlink `codebook`
 
 # 2. in ANY cloned repo, check out the PR and review it
 cd /path/to/some/clone
 gh pr checkout 1234
-prl-review 1234                       # opens the reading-spine HTML
+codebook 1234                       # opens the reading-spine HTML
 ```
 
-`prl-review` figures out the PR's base branch from GitHub, diffs `merge-base..HEAD`,
+`codebook` figures out the PR's base branch from GitHub, diffs `merge-base..HEAD`,
 linearizes, and opens the spine. Other forms:
 
 ```bash
-prl-review --working                  # review your uncommitted changes (vs HEAD) — no PR/gh
-prl-review --staged                   # review only staged changes
-prl-review --working --watch          # live-reload server: re-renders as you edit
-prl-review --tree [path]              # read a whole dir/package in dependency order (no diff)
-prl-review                            # review the current branch vs its base (no PR #)
-prl-review --base origin/main --head HEAD
-prl-review <repo-dir>                 # review a checkout elsewhere
-prl-review --fixture rate-limit       # built-in example, no sem/gh needed
-prl-review 1234 --out review.html     # write to a file instead of a temp file
+codebook --working                  # review your uncommitted changes (vs HEAD) — no PR/gh
+codebook --staged                   # review only staged changes
+codebook --working --watch          # live-reload server: re-renders as you edit
+codebook --tree [path]              # read a whole dir/package in dependency order (no diff)
+codebook                            # review the current branch vs its base (no PR #)
+codebook --base origin/main --head HEAD
+codebook <repo-dir>                 # review a checkout elsewhere
+codebook --fixture rate-limit       # built-in example, no sem/gh needed
+codebook 1234 --out review.html     # write to a file instead of a temp file
 ```
 
 `--working`/`--staged` review your **local changes** with no commit, PR, or `gh`
@@ -120,3 +128,17 @@ Scope notes: this reads a **local checkout** and never posts back. `orphan`/
 module-level entities from `sem` are dropped; only dependency edges between two
 *changed* entities affect the reading order (edges to unchanged code are dropped
 by design, §3).
+
+## Developing
+
+Working on Codebook itself:
+
+```bash
+make verify    # the gate: typecheck + lint + all tests (offline, no sem/gh)
+make eval      # linearize every fixture -> eval/report.html
+make demo      # server + web on the rate-limit fixture
+```
+
+`make verify`/`make eval` need no external binaries; the `sem` integration tests
+auto-skip when `sem` isn't installed (so they don't run in that path). Browser
+e2e (Playwright) and a VS Code webview are **not** built — see `STATUS.md`.

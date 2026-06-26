@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import type { Entity } from '@prl/contracts';
+import type { Entity } from '@codebook/contracts';
 import {
   cmpStr,
   compareEntities,

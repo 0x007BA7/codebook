@@ -4,8 +4,8 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { createElement } from 'react';
-import { ReadingPlanSchema, type GraphInput } from '@prl/contracts';
-import { linearize } from '@prl/core';
+import { ReadingPlanSchema, type GraphInput } from '@codebook/contracts';
+import { linearize } from '@codebook/core';
 import { Spine, Legend } from './Spine.js';
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');

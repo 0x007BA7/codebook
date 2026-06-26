@@ -89,7 +89,7 @@ packages/
   ingest/     FixtureIngestor (tests) + SemIngestor (shells out, auto-skips)
   server/     Fastify API (buildApp is injectable for contract tests)
   web/        React + Vite; Spine.tsx is the shared, platform-clean component
-  cli/        prl binary + the eval harness (eval.ts)
+  cli/        codebook binary + the eval harness (eval.ts)
 fixtures/     golden inputs + expected outputs
 eval/         scorecard.json + report.html (the human's at-a-glance view)
 ```

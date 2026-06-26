@@ -11,16 +11,18 @@ help: ## Show this help
 setup: ## Install dependencies
 	npm install
 
-install: setup ## Install deps + put `prl-review` on your PATH (run PRs from any repo)
+install: setup ## Install deps + put `codebook` (and `cb`) on your PATH
 	bash scripts/install.sh
 
-uninstall: ## Remove the `prl-review` symlink from your PATH
+uninstall: ## Remove the `codebook`/`cb` symlinks from your PATH
 	@for d in /usr/local/bin /opt/homebrew/bin "$$HOME/.local/bin" "$$PREFIX"; do \
-	  [ -L "$$d/prl-review" ] && rm -f "$$d/prl-review" && echo "removed $$d/prl-review"; \
+	  for n in codebook cb prl-review; do \
+	    [ -L "$$d/$$n" ] && rm -f "$$d/$$n" && echo "removed $$d/$$n"; \
+	  done; \
 	done; true
 
 build: ## Build the web app (other packages run from TS source via tsx/vitest)
-	npm run build --workspace @prl/web
+	npm run build --workspace @codebook/web
 
 typecheck: ## tsc --noEmit across every package (per-package lib isolation)
 	node scripts/typecheck.mjs

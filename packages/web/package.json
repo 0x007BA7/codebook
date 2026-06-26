@@ -1,5 +1,5 @@
 {
-  "name": "@prl/web",
+  "name": "@codebook/web",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -13,7 +13,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@prl/contracts": "*",
+    "@codebook/contracts": "*",
     "prismjs": "^1.29.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"

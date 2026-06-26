@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
-import type { GraphInput, Edge, Entity, Rel } from '@prl/contracts';
+import type { GraphInput, Edge, Entity, Rel } from '@codebook/contracts';
 import { linearize } from './linearize.js';
 import { stableStringify } from './serialize.js';
 import { checkLaws } from './invariants.js';

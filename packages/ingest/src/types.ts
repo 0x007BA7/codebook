@@ -1,4 +1,4 @@
-import type { GraphInput } from '@prl/contracts';
+import type { GraphInput } from '@codebook/contracts';
 
 /** Options accepted by any ingest backend. Backends use what they need. */
 export interface IngestOpts {

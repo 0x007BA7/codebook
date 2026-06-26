@@ -3,7 +3,7 @@
 // (Vite/Vitest). Without it, classic-runtime renders fail: "React is not defined".
 import * as React from 'react';
 import type { ReactElement } from 'react';
-import type { ReadingPlan, ReadingStep, Cluster, Category } from '@prl/contracts';
+import type { ReadingPlan, ReadingStep, Cluster, Category } from '@codebook/contracts';
 import { parsePatch, diffLines, splitRows, type DiffOp } from './linediff.js';
 import { highlightLines, langFor, type Seg } from './highlight.js';
 

@@ -5,8 +5,8 @@
  */
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { stableStringify } from '@prl/core';
-import type { GraphInput, Entity, Edge, Category, EntityKind } from '@prl/contracts';
+import { stableStringify } from '@codebook/core';
+import type { GraphInput, Entity, Edge, Category, EntityKind } from '@codebook/contracts';
 
 const SEED = 0x9e3779b9;
 const N = 160;

@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { linearize, stableStringify, checkLaws } from '@prl/core';
-import { parseGraphInput } from '@prl/contracts';
+import { linearize, stableStringify, checkLaws } from '@codebook/core';
+import { parseGraphInput } from '@codebook/contracts';
 import {
   FixtureIngestor,
   listFixtures,

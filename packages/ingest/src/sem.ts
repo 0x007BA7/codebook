@@ -10,7 +10,7 @@ import {
   type ChangeKind,
   type Rel,
   type Hunk,
-} from '@prl/contracts';
+} from '@codebook/contracts';
 import { SemUnavailableError, type Ingestor, type IngestOpts } from './types.js';
 
 // ---------------------------------------------------------------------------

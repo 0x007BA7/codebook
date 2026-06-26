@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactElement } from 'react';
-import type { ReadingPlan } from '@prl/contracts';
+import type { ReadingPlan } from '@codebook/contracts';
 import { Spine, Legend } from './Spine.js';
 import { initSpinePopdowns } from './popdown.js';
 

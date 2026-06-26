@@ -1,5 +1,5 @@
 {
-  "name": "@prl/server",
+  "name": "@codebook/server",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -7,9 +7,9 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@prl/contracts": "*",
-    "@prl/core": "*",
-    "@prl/ingest": "*",
+    "@codebook/contracts": "*",
+    "@codebook/core": "*",
+    "@codebook/ingest": "*",
     "fastify": "^5.2.0"
   }
 }
