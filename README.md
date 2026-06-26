@@ -11,6 +11,42 @@ The reading order is a **deterministic topological sort** of the PR's dependency
 graph (Tarjan SCC → condensation → Kahn with a priority tiebreak). No LLM, no
 randomness — the same PR always produces the same plan.
 
+> **Heads up — this is a vibe-coded project.** It was built fast and
+> iteratively with an AI agent, and it leans almost entirely on
+> [`sem`](https://github.com/Ataraxy-Labs/sem) (tree-sitter under the hood) to
+> find code entities and their dependencies. Codebook is only as good as that
+> static analysis: it sees what tree-sitter can resolve statically and misses
+> what it can't — dynamic dispatch, runtime wiring, reflection, and framework
+> "magic" (e.g. Rails-style associations) often produce no edge at all. Treat
+> the reading order as a strong hint, not ground truth.
+
+## Why read in dependency order?
+
+We're drowning in generated code. The slow part of review usually isn't reading —
+it's reading the *wrong things first*: you wade through helpers, scaffolding, and
+incidental churn before you reach the code that actually matters. Codebook
+doesn't solve that, but it helps: it structures a change set and orders it so the
+code that carries the most weight surfaces earlier, or is at least a shorter hop
+away.
+
+The reading order is a dependency sort — dependencies before the things that use
+them — and the ranking layered on top is tunable in the Settings panel:
+
+- **Rank by dependencies (fan-out)** — files that pull in the most sort first. In
+  practice this floats **tests** to the top, because a test exercises a lot of
+  the system. Reading tests first feels counter-intuitive, but it's often the
+  fastest way to learn how the data is shaped and how it flows through the
+  change — and agentic coding *should* be leaving behind functional tests you can
+  step through. A good default for exactly that reason.
+- **Rank by dependents (blast radius)** — files that the most other code depends
+  on sort first. This roughly orders by reach: the more callers something has,
+  the higher it floats, so you tend to hit the load-bearing code fast. The
+  tradeoff is it can over-promote small utility and helper functions — widely
+  used, but rarely where the interesting logic lives.
+
+Neither order is "correct" — they're two lenses. Fan-out asks *"what does this
+change touch?"*; blast radius asks *"what touches this?"*
+
 ## Requirements
 
 | Tool | Needed for | Install |
