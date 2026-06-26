@@ -1,11 +1,13 @@
 # Codebook
 
-Reviewing a big diff — or reading an unfamiliar package — usually means jumping
-around: you hit helpers, scaffolding, and incidental churn before the code that
-actually matters. Codebook turns a pull request, your local changes, or a whole
-package into a single **reading order** — a top-to-bottom sequence where every
-dependency comes before the thing that uses it, so the load-bearing code
-surfaces sooner and a 2000-line diff becomes something you read straight through.
+We're all drowning in AI generated code nowadays. The default review flow in 
+tools like github sort files alphabetically and by folder structure. This means
+that when reviewing a large diff, you end up reading a bunch of irrelevant code
+first. 
+
+Codebook structures a diff into a more logical reading order, and allows you to
+click through and understand the connection between the entities better. It's 
+been extremely useful for me, so I hope you like it. 
 
 ## How it works
 
@@ -14,8 +16,7 @@ hood) to extract the changed code entities and the dependency edges between them
 then computes a **deterministic topological sort** of that graph (Tarjan SCC →
 condensation → Kahn with a priority tiebreak). Dependencies are ordered before
 their dependents; cycles (mutual recursion, circular imports) collapse into
-clusters you read as a unit. No LLM, no randomness — the same input always
-produces the same plan.
+clusters you read as a unit.
 
 Because it's built on static analysis, codebook is only as good as what
 tree-sitter can resolve: it misses what it can't see statically — dynamic
@@ -45,31 +46,66 @@ load-bearing code, but can over-promote small helper functions.
 
 ## Quick start
 
+Install it (needs `git`, `node` 20+, `npm`, and `sem` for real diffs — see
+[Requirements](#requirements)):
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/rzlim08/codebook/main/install.sh | bash
-codebook --fixture rate-limit # see a reading spine — no sem/gh needed
 ```
 
-The installer needs `git`, `node` 20+, and `npm` already present (it won't
-install a toolchain). It clones into `~/.local/share/codebook`, installs
-runtime deps with `npm ci --omit=dev` (~37 MB, all prebuilt — **no compile
-step**), and symlinks `codebook` (and `cb`) into `~/.local/bin`. Re-running it
-updates in place; pin a ref with `CODEBOOK_REF=<branch|tag|sha>`.
-
-Working from a clone instead? `make install` does the same symlinking. To
-uninstall: `rm -rf ~/.local/share/codebook ~/.local/bin/codebook ~/.local/bin/cb`.
-
-That opens a worked example offline. To use it on real code, install
-[`sem`](https://github.com/Ataraxy-Labs/sem) (`brew install sem-cli`), then from
-any repo:
+Then point it at **your own code** — from inside any repo on your machine:
 
 ```bash
-codebook --working    # review your uncommitted changes
-codebook 1234         # review a GitHub PR (needs `gh`)
-codebook --tree src   # read a package in dependency order
+codebook --working    # your uncommitted changes (no commit, PR, or gh needed)
+codebook              # the current branch vs its base
+codebook 1234         # a GitHub PR by number (needs gh)
+codebook --tree src   # read a whole package in dependency order (no diff)
 ```
 
-(Developing Codebook itself? See [Developing](#developing) for the `make` loop.)
+It linearizes the change and opens the reading spine in your browser. That's the
+whole loop — see [Usage](#usage) for every form and flag.
+
+<sub>**Installer details:** it won't install a toolchain — `git`/`node` 20+/`npm`
+must already be present. It clones into `~/.local/share/codebook`, installs
+runtime deps with `npm ci --omit=dev` (~37 MB, all prebuilt — **no compile
+step**), and symlinks `codebook`/`cb` into `~/.local/bin`. Re-running updates in
+place; pin a ref with `CODEBOOK_REF=<branch|tag|sha>`. From a clone, `make
+install` does the same. Uninstall with `rm -rf ~/.local/share/codebook
+~/.local/bin/codebook ~/.local/bin/cb`. No `sem` yet? `codebook --fixture
+rate-limit` shows the UI on a bundled example, offline.</sub>
+
+## Usage
+
+Run `codebook` from inside any git checkout. Every form:
+
+```bash
+codebook 1234                       # a GitHub PR by number (reads the base from GitHub)
+codebook --working                  # uncommitted changes vs HEAD — no PR/gh
+codebook --staged                   # only staged changes
+codebook --working --watch          # live-reload server: re-renders as you edit
+codebook --tree [path]              # a whole dir/package in dependency order (no diff)
+codebook                            # current branch vs its base (no PR #)
+codebook --base origin/main --head HEAD
+codebook <repo-dir>                 # a checkout elsewhere
+codebook --fixture rate-limit       # built-in example, no sem/gh needed
+codebook 1234 --out review.html     # write the HTML to a file instead of a temp file
+```
+
+For the PR-number form, `codebook` reads the PR's base from GitHub, diffs
+`merge-base..HEAD`, linearizes, and opens the spine. `--working`/`--staged`
+review your local changes with no commit, PR, or `gh` — and they're fast on
+re-runs since `sem`'s index stays warm in your repo.
+
+<details>
+<summary>How it talks to <code>sem</code>, and what it reads</summary>
+
+The adapter (`packages/ingest/src/sem.ts`) runs `sem diff --from <base> --to
+<head> --json` for the changed entities (with real code as patch text) and `sem
+graph --json` for the dependency edges, then normalizes both into a `GraphInput`.
+It reads a **local checkout** and never posts back. `orphan`/module-level
+entities are dropped; only edges between two *changed* entities affect the
+reading order (edges to unchanged code are dropped by design, §3).
+</details>
 
 ## What to look at first
 
@@ -101,74 +137,30 @@ codebook --tree src   # read a package in dependency order
   two invariant-oracle gaps) are fixed and pinned by regression tests
   (`packages/core/src/{linearize,invariants}.test.ts`).
 
-## API
+## Optional: server + web app
+
+A small HTTP server and web UI ship with the repo as a quick way to browse plans
+in a browser. It's secondary to the `codebook` CLI — most people won't need it.
+Run `make serve` (or `make demo` to open the bundled fixture).
+
+<details>
+<summary>HTTP API + low-level CLI</summary>
 
 ```
-GET  /api/health                         -> { ok: true }
+GET  /api/health                          -> { ok: true }
 GET  /api/reading-plan?fixture=<name>     -> ReadingPlan
 POST /api/reading-plan                    -> ReadingPlan
        body: { fixture } | { repo, base, head, ingestor?: "sem" | "fixture" }
 GET  /api/fixtures                        -> { fixtures: string[] }
 ```
 
-## CLI
+The `codebook` launcher wraps `packages/cli/src/main.ts`; you can also call its
+`plan`/`render` subcommands directly:
 
 ```bash
-npx tsx packages/cli/src/main.ts fixtures
 npx tsx packages/cli/src/main.ts plan --fixture rate-limit
 ```
-
-## Run against a real PR
-
-Two prerequisites (one-time): [`sem`](https://github.com/Ataraxy-Labs/sem) for
-the entity diff + dependency graph, and GitHub [`gh`](https://cli.github.com)
-for the PR-number lookup.
-
-```bash
-# 1. install this tool — puts `codebook` on your PATH
-brew install sem-cli                  # the diff/graph backend (26 languages)
-git clone <this-repo> && cd <this-repo>
-make install                          # npm install + symlink `codebook`
-
-# 2. in ANY cloned repo, check out the PR and review it
-cd /path/to/some/clone
-gh pr checkout 1234
-codebook 1234                       # opens the reading-spine HTML
-```
-
-`codebook` figures out the PR's base branch from GitHub, diffs `merge-base..HEAD`,
-linearizes, and opens the spine. Other forms:
-
-```bash
-codebook --working                  # review your uncommitted changes (vs HEAD) — no PR/gh
-codebook --staged                   # review only staged changes
-codebook --working --watch          # live-reload server: re-renders as you edit
-codebook --tree [path]              # read a whole dir/package in dependency order (no diff)
-codebook                            # review the current branch vs its base (no PR #)
-codebook --base origin/main --head HEAD
-codebook <repo-dir>                 # review a checkout elsewhere
-codebook --fixture rate-limit       # built-in example, no sem/gh needed
-codebook 1234 --out review.html     # write to a file instead of a temp file
-```
-
-`--working`/`--staged` review your **local changes** with no commit, PR, or `gh`
-needed — and they're fast on re-runs since `sem`'s index stays warm in your repo.
-
-(`make uninstall` removes the symlink. Under the hood it runs the CLI's `render`
-command; you can still call `packages/cli/src/main.ts plan/render` directly, or
-POST to the server — see below.)
-
-The adapter (`packages/ingest/src/sem.ts`) runs `sem diff --from <base> --to
-<head> --json` for the changed entities (with real code as patch text) and
-`sem graph --json` for the dependency edges, then normalizes both into a
-`GraphInput`. It's validated against real `sem 0.14` output captured in
-`fixtures/sem-samples/`, and an integration test (auto-skipped when `sem` is
-absent) builds a throwaway repo and runs the live tool.
-
-Scope notes: this reads a **local checkout** and never posts back. `orphan`/
-module-level entities from `sem` are dropped; only dependency edges between two
-*changed* entities affect the reading order (edges to unchanged code are dropped
-by design, §3).
+</details>
 
 ## Developing
 
@@ -184,8 +176,7 @@ make demo      # server + web on the rate-limit fixture
 auto-skip when `sem` isn't installed (so they don't run in that path). Browser
 e2e (Playwright) and a VS Code webview are **not** built — see `STATUS.md`.
 
-## Made with Claude
+## Nota Bene
 
-Codebook was built iteratively with [Claude](https://claude.com/claude-code) —
-it's a vibe-coded project, and the analysis it relies on comes entirely from
-`sem`/tree-sitter rather than anything bespoke.
+This is a mostly vibecoded project. I've been using it pretty extensively in my own 
+personal work, but it comes with all the hairiness of extensively AI coded projects. 
