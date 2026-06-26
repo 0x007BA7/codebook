@@ -1,51 +1,27 @@
 # Codebook
 
-Turn a large pull request — or your local changes, or a whole package — into a
-single, sensible **reading order** — a linear
-sequence of changed code entities where every dependency is read before the
-thing that depends on it. A 2000-line diff becomes something you read top to
-bottom instead of jumping around. Cycles (mutual recursion, circular imports)
-collapse into clusters you read as a unit.
+Reviewing a big diff — or reading an unfamiliar package — usually means jumping
+around: you hit helpers, scaffolding, and incidental churn before the code that
+actually matters. Codebook turns a pull request, your local changes, or a whole
+package into a single **reading order** — a top-to-bottom sequence where every
+dependency comes before the thing that uses it, so the load-bearing code
+surfaces sooner and a 2000-line diff becomes something you read straight through.
 
-The reading order is a **deterministic topological sort** of the PR's dependency
-graph (Tarjan SCC → condensation → Kahn with a priority tiebreak). No LLM, no
-randomness — the same PR always produces the same plan.
+## How it works
 
-> **Heads up — this is a vibe-coded project.** It was built fast and
-> iteratively with an AI agent, and it leans almost entirely on
-> [`sem`](https://github.com/Ataraxy-Labs/sem) (tree-sitter under the hood) to
-> find code entities and their dependencies. Codebook is only as good as that
-> static analysis: it sees what tree-sitter can resolve statically and misses
-> what it can't — dynamic dispatch, runtime wiring, reflection, and framework
-> "magic" (e.g. Rails-style associations) often produce no edge at all. Treat
-> the reading order as a strong hint, not ground truth.
+Codebook uses [`sem`](https://github.com/Ataraxy-Labs/sem) (tree-sitter under the
+hood) to extract the changed code entities and the dependency edges between them,
+then computes a **deterministic topological sort** of that graph (Tarjan SCC →
+condensation → Kahn with a priority tiebreak). Dependencies are ordered before
+their dependents; cycles (mutual recursion, circular imports) collapse into
+clusters you read as a unit. No LLM, no randomness — the same input always
+produces the same plan.
 
-## Why read in dependency order?
-
-We're drowning in generated code. The slow part of review usually isn't reading —
-it's reading the *wrong things first*: you wade through helpers, scaffolding, and
-incidental churn before you reach the code that actually matters. Codebook
-doesn't solve that, but it helps: it structures a change set and orders it so the
-code that carries the most weight surfaces earlier, or is at least a shorter hop
-away.
-
-The reading order is a dependency sort — dependencies before the things that use
-them — and the ranking layered on top is tunable in the Settings panel:
-
-- **Rank by dependencies (fan-out)** — files that pull in the most sort first. In
-  practice this floats **tests** to the top, because a test exercises a lot of
-  the system. Reading tests first feels counter-intuitive, but it's often the
-  fastest way to learn how the data is shaped and how it flows through the
-  change — and agentic coding *should* be leaving behind functional tests you can
-  step through. A good default for exactly that reason.
-- **Rank by dependents (blast radius)** — files that the most other code depends
-  on sort first. This roughly orders by reach: the more callers something has,
-  the higher it floats, so you tend to hit the load-bearing code fast. The
-  tradeoff is it can over-promote small utility and helper functions — widely
-  used, but rarely where the interesting logic lives.
-
-Neither order is "correct" — they're two lenses. Fan-out asks *"what does this
-change touch?"*; blast radius asks *"what touches this?"*
+Because it's built on static analysis, codebook is only as good as what
+tree-sitter can resolve: it misses what it can't see statically — dynamic
+dispatch, runtime wiring, reflection, framework "magic" (e.g. Rails-style
+associations) often produce no edge at all. Treat the reading order as a strong
+hint, not ground truth.
 
 ## Requirements
 
@@ -60,6 +36,12 @@ change touch?"*; blast radius asks *"what touches this?"*
 the bundled examples; `gh` is needed *only* to review a PR by number. codebook
 checks for each tool when it actually needs it and tells you exactly what's
 missing (e.g. `--working` never asks for `gh`).
+
+**Ranking (Settings panel):** within the dependency order, file groups sort by
+one of two lenses. **Fan-out** (default) puts files that depend on the most
+first — this tends to surface tests, a quick way to see how data flows. **Blast
+radius** puts the files that the most other code depends on first — this surfaces
+load-bearing code, but can over-promote small helper functions.
 
 ## Quick start
 
@@ -201,3 +183,9 @@ make demo      # server + web on the rate-limit fixture
 `make verify`/`make eval` need no external binaries; the `sem` integration tests
 auto-skip when `sem` isn't installed (so they don't run in that path). Browser
 e2e (Playwright) and a VS Code webview are **not** built — see `STATUS.md`.
+
+## Made with Claude
+
+Codebook was built iteratively with [Claude](https://claude.com/claude-code) —
+it's a vibe-coded project, and the analysis it relies on comes entirely from
+`sem`/tree-sitter rather than anything bespoke.
