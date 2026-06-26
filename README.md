@@ -162,8 +162,7 @@ make demo      # server + web on the rate-limit fixture
 ```
 
 `make verify`/`make eval` need no external binaries; the `sem` integration tests
-auto-skip when `sem` isn't installed (so they don't run in that path). Browser
-e2e (Playwright) and a VS Code webview are **not** built.
+auto-skip when `sem` isn't installed (so they don't run in that path).
 
 ## Nota Bene
 
