@@ -1,41 +1,99 @@
-/* Flat design: no gradients, no shadows (§15). Color encodes category only. */
+/* Flat design (no gradients/shadows, §15). Sans-serif chrome, mono only for
+   code. Fully tokenized for light + dark (auto via prefers-color-scheme, or
+   forced via :root[data-theme]). */
 :root {
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+
   --bg: #fbfbfa;
-  --fg: #1f2328;
-  --muted: #6a737d;
-  --line: #d7dbe0;
-  --rail: #c2cad1;
+  --surface: #ffffff;
+  --surface-2: #f5f6f8;
+  --fg: #21262c;
+  --muted: #59636e;
+  --line: #e3e6ea;
+  --rail: #d4dadf;
+
+  --accent: #4b56c4;      /* interaction (links/focus) — NOT a category hue */
+  --accent-soft: #ececfb;
+
   --add: #1a7f37;
-  --del: #b3261e;
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --del: #cf222e;
+  --add-bg: #e8fcef;
+  --del-bg: #ffece9;
+  --flash: #fff3bf;
+
+  /* prism tokens */
+  --t-comment: #5a6168;
+  --t-punct: #57606a;
+  --t-keyword: #cf222e;
+  --t-op: #0550ae;
+  --t-string: #0a3069;
+  --t-number: #0550ae;
+  --t-func: #8250df;
+  --t-prop: #116329;
+  --t-deco: #953800;
+
+  /* category accents */
+  --cat-logic: #2f6f4f;
+  --cat-config: #8a6d1f;
+  --cat-test: #6a3a8a;
+  --cat-wiring: #1f5d8a;
+  --cat-cycle: #6a3a8a;
+
+  color-scheme: light dark;
+  font-family: var(--sans);
+}
+
+/* --- dark palette (shared by auto-dark and the explicit toggle) --- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1117; --surface: #161b22; --surface-2: #0d1117;
+    --fg: #e6edf3; --muted: #8b949e; --line: #2a313c; --rail: #3a424e;
+    --accent: #8a93f0; --accent-soft: #1d2233;
+    --add: #3fb950; --del: #f85149; --add-bg: rgba(63,185,80,.14); --del-bg: rgba(248,81,73,.14);
+    --flash: #3c3514;
+    --t-comment: #8b949e; --t-punct: #c9d1d9; --t-keyword: #ff7b72; --t-op: #79c0ff;
+    --t-string: #a5d6ff; --t-number: #79c0ff; --t-func: #d2a8ff; --t-prop: #7ee787; --t-deco: #ffa657;
+    --cat-logic: #56b886; --cat-config: #d4a72c; --cat-test: #b083d9; --cat-wiring: #58a6ff; --cat-cycle: #b083d9;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1117; --surface: #161b22; --surface-2: #0d1117;
+  --fg: #e6edf3; --muted: #8b949e; --line: #2a313c; --rail: #3a424e;
+  --accent: #8a93f0; --accent-soft: #1d2233;
+  --add: #3fb950; --del: #f85149; --add-bg: rgba(63,185,80,.14); --del-bg: rgba(248,81,73,.14);
+  --flash: #3c3514;
+  --t-comment: #8b949e; --t-punct: #c9d1d9; --t-keyword: #ff7b72; --t-op: #79c0ff;
+  --t-string: #a5d6ff; --t-number: #79c0ff; --t-func: #d2a8ff; --t-prop: #7ee787; --t-deco: #ffa657;
+  --cat-logic: #56b886; --cat-config: #d4a72c; --cat-test: #b083d9; --cat-wiring: #58a6ff; --cat-cycle: #b083d9;
 }
 
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--fg); }
-.app { max-width: 920px; margin: 0 auto; padding: 24px 20px 80px; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans); }
+.app { max-width: 940px; margin: 0 auto; padding: 28px 24px 96px; }
 
-.topbar { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; border-bottom: 1px solid var(--line); padding-bottom: 12px; }
-.topbar h1 { font-size: 18px; margin: 0; }
-.topbar select { font: inherit; padding: 2px 6px; border: 1px solid var(--line); background: #fff; }
+.topbar { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; border-bottom: 1px solid var(--line); padding-bottom: 14px; }
+.topbar h1 { font-size: 17px; font-weight: 650; letter-spacing: -0.01em; margin: 0; }
+.topbar select { font: inherit; padding: 3px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--fg); }
 
 .legend { display: flex; gap: 14px; margin-left: auto; font-size: 12px; color: var(--muted); }
-.legend-item { display: inline-flex; align-items: center; gap: 5px; }
-.swatch { width: 11px; height: 11px; border-radius: 2px; display: inline-block; }
+.legend-item { display: inline-flex; align-items: center; gap: 6px; }
+.swatch { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
 
-.stats { color: var(--muted); font-size: 13px; margin: 14px 0 18px; }
+.stats { color: var(--muted); font-size: 13px; margin: 16px 0 20px; }
 .error { color: var(--del); }
 .add { color: var(--add); }
 .del { color: var(--del); }
 
 /* --- spine: grouped by file; rows FLOW (no fixed heights => no overlap) --- */
 .steps { display: flex; flex-direction: column; }
-.file-group { margin: 20px 0 2px; }
+.file-group { margin: 22px 0 2px; }
 .file-head {
   display: flex; align-items: baseline; gap: 10px;
-  padding: 6px 0 6px 44px; margin-bottom: 2px;
+  padding: 6px 0 7px 44px; margin-bottom: 4px;
   border-bottom: 1px solid var(--line);
 }
-.file-name { font-weight: 600; font-size: 13px; word-break: break-all; }
+.file-name { font-family: var(--mono); font-weight: 600; font-size: 12.5px; word-break: break-all; }
 .file-count { font-size: 11px; color: var(--muted); white-space: nowrap; margin-left: auto; }
 .step-row { display: flex; align-items: stretch; }
 
@@ -46,62 +104,68 @@ body { margin: 0; background: var(--bg); color: var(--fg); }
   width: 2px; background: var(--rail); transform: translateX(-50%);
 }
 .step-num {
-  position: relative; z-index: 1; margin-top: 12px;
+  position: relative; z-index: 1; margin-top: 13px;
   width: 26px; height: 26px; border-radius: 50%;
-  background: #eef1f4; color: var(--fg); border: 1px solid var(--line);
+  background: var(--surface-2); color: var(--muted); border: 1px solid var(--line);
   display: inline-flex; align-items: center; justify-content: center;
-  font-size: 12px;
+  font-family: var(--mono); font-size: 12px;
 }
 
-.step-card { flex: 1 1 auto; min-width: 0; border: 1px solid var(--line); background: #fff; margin: 6px 0; }
+.step-card { flex: 1 1 auto; min-width: 0; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); margin: 7px 0; --cat: var(--rail); }
+.step-card[data-category="logic"]  { --cat: var(--cat-logic); }
+.step-card[data-category="config"] { --cat: var(--cat-config); }
+.step-card[data-category="test"]   { --cat: var(--cat-test); }
+.step-card[data-category="wiring"] { --cat: var(--cat-wiring); }
 .step-card > summary {
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: center;
   gap: 10px;
-  padding: 10px 12px;
+  padding: 11px 13px;
   cursor: pointer;
   list-style: none;
+  border-left: 3px solid var(--cat);
+  border-radius: 7px 7px 0 0;
 }
+.step-card:not([open]) > summary { border-radius: 6px; }
 .step-card > summary::-webkit-details-marker { display: none; }
-.step-title { min-width: 0; display: inline-flex; align-items: baseline; gap: 6px; }
-.step-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.step-file { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.step-title { min-width: 0; display: inline-flex; align-items: baseline; gap: 7px; }
+.step-name { font-family: var(--mono); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.step-file { font-family: var(--mono); color: var(--muted); font-size: 12px; white-space: nowrap; }
 .summary-meta { display: inline-flex; align-items: center; gap: 10px; white-space: nowrap; }
-.cat-tag { font-size: 11px; text-transform: lowercase; }
+.cat-tag { font-size: 11px; color: var(--cat); }
 .step-focus {
-  text-decoration: none; color: #1f5d8a; font-size: 13px; cursor: pointer;
-  opacity: 0.75; flex: 0 0 auto; padding: 2px 4px; border-radius: 3px;
+  text-decoration: none; color: var(--accent); font-size: 13px; cursor: pointer;
+  opacity: 0.7; flex: 0 0 auto; padding: 2px 5px; border-radius: 4px;
 }
-.step-focus:hover, .step-focus:focus-visible { opacity: 1; background: #eaf2f8; }
+.step-focus:hover, .step-focus:focus-visible { opacity: 1; background: var(--accent-soft); }
 
-/* visible keyboard focus everywhere (WCAG 2.4.7) — flat 2px ring */
-:focus-visible { outline: 2px solid #1f5d8a; outline-offset: 2px; }
+/* visible keyboard focus everywhere (WCAG 2.4.7) */
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .step-card > summary:focus-visible { outline-offset: -2px; }
-.reviewed { width: 15px; height: 15px; }
-.reviewed-wrap { padding: 2px 0; }
-.step-delta { font-size: 12px; white-space: nowrap; }
+.step-delta { font-family: var(--mono); font-size: 12px; white-space: nowrap; }
 .cycle-badge {
-  font-size: 11px; color: #6a3a8a; background: rgba(154, 123, 191, 0.12);
-  border: 1px solid #cdbbe4; border-radius: 3px; padding: 0 6px; white-space: nowrap;
+  font-size: 11px; color: var(--cat-cycle); background: color-mix(in srgb, var(--cat-cycle) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--cat-cycle) 35%, transparent);
+  border-radius: 5px; padding: 1px 7px; white-space: nowrap;
 }
 
 /* card footer: deps + "used by" on the left, reviewed checkbox on the right */
 .card-foot {
   display: flex; align-items: flex-start; gap: 10px;
   font-size: 12px; color: var(--muted);
-  padding: 6px 12px; border-top: 1px solid var(--line);
+  padding: 7px 13px; border-top: 1px solid var(--line);
 }
-.foot-left { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
+.foot-left { display: flex; flex-direction: column; gap: 5px; min-width: 0; flex: 1; }
 .deps { min-width: 0; }
-.dep-link { color: #1f5d8a; text-decoration: none; cursor: pointer; }
+.dep-link { color: var(--accent); text-decoration: none; cursor: pointer; }
 .dep-link:hover { text-decoration: underline; }
 .dep-link.dep-open { font-weight: 600; }
 .deps-hint { color: var(--muted); font-style: italic; }
 
 /* "used by" dependents dropdown */
 .dependents > summary {
-  cursor: pointer; list-style: none; width: fit-content; color: #1f5d8a;
+  cursor: pointer; list-style: none; width: fit-content; color: var(--accent);
 }
 .dependents > summary::-webkit-details-marker { display: none; }
 .dependents > summary::before { content: '▸ '; }
@@ -109,20 +173,19 @@ body { margin: 0; background: var(--bg); color: var(--fg); }
 .dep-list { margin: 4px 0 2px; padding: 0 0 0 18px; display: flex; flex-direction: column; gap: 3px; }
 .dep-list li { list-style: none; }
 .reviewed-wrap {
-  margin-left: auto; display: inline-flex; align-items: center; gap: 5px;
-  white-space: nowrap; cursor: pointer; user-select: none;
+  margin-left: auto; display: inline-flex; align-items: center; gap: 6px;
+  white-space: nowrap; cursor: pointer; user-select: none; padding: 2px 0;
 }
-.reviewed { cursor: pointer; }
+.reviewed { width: 15px; height: 15px; cursor: pointer; accent-color: var(--accent); }
 
 /* reviewing a step dims its card + greens its number (pure CSS via :has) */
 .step-card:has(.reviewed:checked) { opacity: 0.5; }
 .step-row:has(.reviewed:checked) .step-num {
-  background: #d8f3df; border-color: #1a7f37; color: #1a7f37;
+  background: color-mix(in srgb, var(--add) 18%, transparent); border-color: var(--add); color: var(--add);
 }
 
-/* "hide reviewed steps" setting: hide reviewed CANONICAL rows (and fully-
-   reviewed file groups) from the main panel only. The `> .step-card` scope
-   leaves dependency previews (.embed clones, the dock) untouched. */
+/* "hide reviewed steps" setting: hide reviewed CANONICAL rows + fully-reviewed
+   file groups from the main panel only (previews/dock untouched). */
 body.prl-hide-reviewed .step-row:has(> .step-card .reviewed:checked) { display: none; }
 body.prl-hide-reviewed
   .file-group:not(:has(> .step-row > .step-card .reviewed:not(:checked))) {
@@ -130,43 +193,38 @@ body.prl-hide-reviewed
 }
 
 /* preview of a dependency (popped below, or docked right). Injected at runtime. */
-.embed { margin: 2px 0 8px 44px; border-left: 3px solid #9a7bbf; padding-left: 8px; }
-.embed-label {
-  display: flex; justify-content: space-between; align-items: center;
-  font-size: 11px; color: #6a3a8a; padding: 3px 4px;
-}
+.embed { margin: 3px 0 9px 44px; border-left: 3px solid color-mix(in srgb, var(--cat-cycle) 50%, var(--line)); padding-left: 9px; }
 .embed .step-card { margin: 0; }
-.embed-label { display: flex; align-items: center; gap: 8px; }
+.embed-label { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--muted); padding: 3px 4px; }
 .embed-label > span { flex: 1; min-width: 0; }
 .embed-close {
-  border: 1px solid var(--line); background: #fff; cursor: pointer;
+  border: 1px solid var(--line); background: var(--surface); cursor: pointer;
   font-size: 14px; font-weight: 700; line-height: 1; padding: 2px 8px;
-  border-radius: 3px; color: var(--fg);
+  border-radius: 4px; color: var(--muted);
 }
-.embed-close:hover { background: #ffebe9; color: #9e1c14; border-color: #e7a9a3; }
+.embed-close:hover { background: var(--del-bg); color: var(--del); border-color: color-mix(in srgb, var(--del) 40%, transparent); }
 
-/* floating review-progress pill (bottom-right; left of the dock when open) */
+/* floating review-progress pill (bottom-right). z-index keeps it above the dock. */
 .prl-progress {
-  position: fixed; right: 16px; bottom: 16px; z-index: 30;
+  position: fixed; right: 18px; bottom: 18px; z-index: 30;
   font: inherit; font-size: 12px; cursor: pointer;
-  background: var(--fg); color: #fff; border: 1px solid var(--fg);
-  border-radius: 16px; padding: 8px 14px;
+  background: var(--fg); color: var(--bg); border: 1px solid var(--fg);
+  border-radius: 18px; padding: 9px 15px;
 }
 .prl-progress:hover { opacity: 0.9; }
-.prl-progress.prl-complete { background: #1a7f37; border-color: #1a7f37; }
-/* z-index 30 keeps it above the dock (20), so it stays put when the dock opens */
+.prl-progress.prl-complete { background: var(--add); border-color: var(--add); color: #fff; }
 
 /* transient highlight when "focus in main" jumps to a step (flat: no shadow) */
 .prl-flash { animation: prl-flash 1.4s ease-out; }
 @keyframes prl-flash {
-  0%, 25% { background: #fff3bf; }
-  100% { background: #fff; }
+  0%, 25% { background: var(--flash); }
+  100% { background: var(--surface); }
 }
 
 /* settings dropdown (injected at runtime; works in the app and standalone) */
 .prl-settings {
   font-size: 12px; color: var(--muted);
-  margin: 8px 0 4px; padding-bottom: 8px; border-bottom: 1px dashed var(--line);
+  margin: 10px 0 4px; padding-bottom: 10px; border-bottom: 1px dashed var(--line);
 }
 .prl-settings > summary {
   cursor: pointer; list-style: none; width: fit-content;
@@ -175,64 +233,61 @@ body.prl-hide-reviewed
 .prl-settings > summary::-webkit-details-marker { display: none; }
 .prl-settings > summary::before { content: '▸ '; }
 .prl-settings[open] > summary::before { content: '▾ '; }
-.prl-settings-body { display: flex; flex-direction: column; gap: 8px; padding: 6px 0 2px 14px; }
+.prl-settings-body { display: flex; flex-direction: column; gap: 9px; padding: 8px 0 2px 14px; }
 .prl-setting { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .prl-setting-label { font-weight: 600; color: var(--fg); min-width: 150px; }
 .prl-settings label { cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+.prl-settings input { accent-color: var(--accent); }
 
-/* right-hand dock for "drop to the right" preview mode. Width is set at
-   runtime (--prl-dock-w) and is drag-resizable via the left-edge handle. */
+/* right-hand dock for "drop to the right" preview mode (drag-resizable). */
 .prl-dock {
   position: fixed; top: 0; right: 0; z-index: 20;
   width: var(--prl-dock-w, 620px); height: 100vh; overflow: auto;
   background: var(--bg); border-left: 1px solid var(--line);
-  padding: 10px 14px 48px 18px;
+  padding: 12px 14px 48px 18px;
 }
 .prl-dock-resizer {
   position: absolute; left: 0; top: 0; width: 7px; height: 100%;
   cursor: col-resize; background: transparent;
 }
-.prl-dock-resizer:hover { background: rgba(31, 93, 138, 0.18); }
+.prl-dock-resizer:hover { background: color-mix(in srgb, var(--accent) 22%, transparent); }
 body.prl-resizing { user-select: none; cursor: col-resize; }
-/* while the dock holds previews, reserve its width and move the spine left so
-   the main code isn't cramped under the fixed panel */
 body.prl-docked { padding-right: var(--prl-dock-w, 620px); }
 body.prl-docked .app { margin-left: 24px; margin-right: 24px; }
 .prl-dock-hdr {
   display: flex; justify-content: space-between; align-items: center;
-  font-weight: 600; font-size: 12px; color: var(--muted); margin-bottom: 8px;
+  font-weight: 600; font-size: 12px; color: var(--muted); margin-bottom: 10px;
 }
 .prl-dock .embed { margin: 0 0 10px 0; border-left-width: 4px; }
 
-.hunks { border-top: 1px solid var(--line); padding: 8px 12px; background: #fafbfc; }
+.hunks { border-top: 1px solid var(--line); padding: 9px 13px; background: var(--surface-2); }
 .hunk { font-size: 12px; padding: 4px 0; color: var(--muted); }
 .hunk + .hunk { border-top: 1px dashed var(--line); }
 .hunk-head { display: flex; justify-content: space-between; }
-.hunk code { color: var(--fg); }
+.hunk code { font-family: var(--mono); color: var(--fg); }
 
-/* actual diff text rendered on expand (§8.2). Real line diff: unchanged lines
-   are context, only true changes are colored; text is syntax-highlighted.
-   Both a unified and a side-by-side layout are emitted; the "Diff view" setting
-   (body.prl-split) chooses which is shown. */
-.diff { margin: 6px 0 2px; font-size: 12px; line-height: 1.5; color: #1f2328; }
+/* actual diff text (§8.2). Real line diff: unchanged = context, only true
+   changes colored; syntax-highlighted. Unified + side-by-side; the "Diff view"
+   setting (body.prl-split) chooses which is shown. */
+.diff { margin: 7px 0 2px; font-family: var(--mono); font-size: 12px; line-height: 1.55; color: var(--fg); }
 .diff-unified { margin: 0; overflow-x: auto; white-space: pre; }
 .diff-line { padding: 0 6px; }
-.diff-line.add { background: #e6ffec; }
-.diff-line.del { background: #ffebe9; }
+.diff-line.add { background: var(--add-bg); }
+.diff-line.del { background: var(--del-bg); }
 .diff-sign { display: inline-block; width: 1ch; color: var(--muted); }
-.diff-sign.add { color: #18753a; font-weight: 700; }
-.diff-sign.del { color: #b02a21; font-weight: 700; }
+.diff-sign.add { color: var(--add); font-weight: 700; }
+.diff-sign.del { color: var(--del); font-weight: 700; }
 
-/* Prism syntax theme (compact, GitHub-light palette; readable over add/del tints) */
-.token.comment, .token.prolog, .token.doctype, .token.cdata { color: #5a6168; font-style: italic; }
-.token.punctuation { color: #57606a; }
-.token.keyword, .token.boolean, .token.atrule, .token.important, .token.tag, .token.selector { color: #cf222e; }
-.token.operator, .token.entity, .token.url { color: #0550ae; }
-.token.string, .token.char, .token.attr-value, .token.regex, .token.triple-quoted-string { color: #0a3069; }
-.token.number, .token.constant, .token.symbol { color: #0550ae; }
-.token.function, .token.class-name, .token.title { color: #8250df; }
-.token.property, .token.attr-name, .token.builtin, .token.variable, .token.parameter { color: #116329; }
-.token.decorator, .token.annotation { color: #953800; }
+/* Prism syntax theme (tokenized for light/dark) */
+.token.comment, .token.prolog, .token.doctype, .token.cdata { color: var(--t-comment); font-style: italic; }
+.token.punctuation { color: var(--t-punct); }
+.token.keyword, .token.boolean, .token.atrule, .token.important, .token.tag, .token.selector { color: var(--t-keyword); }
+.token.operator, .token.entity, .token.url { color: var(--t-op); }
+.token.string, .token.char, .token.attr-value, .token.regex, .token.triple-quoted-string { color: var(--t-string); }
+.token.number, .token.constant, .token.symbol { color: var(--t-number); }
+.token.function, .token.class-name, .token.title { color: var(--t-func); }
+.token.property, .token.attr-name, .token.builtin, .token.variable, .token.parameter { color: var(--t-prop); }
+.token.decorator, .token.annotation { color: var(--t-deco); }
 
 /* side-by-side layout (hidden until the setting turns it on) */
 .diff-split { display: none; }
@@ -241,8 +296,8 @@ body.prl-docked .app { margin-left: 24px; margin-right: 24px; }
   margin: 0; padding: 0 6px; white-space: pre; overflow-x: auto;
   border-left: 1px solid var(--line);
 }
-.diff-split .dcell.del { background: #ffebe9; }
-.diff-split .dcell.add { background: #e6ffec; }
-.diff-split .dcell.empty { background: #fafbfc; }
+.diff-split .dcell.del { background: var(--del-bg); }
+.diff-split .dcell.add { background: var(--add-bg); }
+.diff-split .dcell.empty { background: var(--surface-2); }
 body.prl-split .diff-unified { display: none; }
 body.prl-split .diff-split { display: block; }

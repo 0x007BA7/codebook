@@ -26,9 +26,6 @@ const CATEGORY_COLOR: Record<Category, string> = {
   test: '#6a3a8a',
   wiring: '#1f5d8a',
 };
-const DEFAULT_COLOR = '#555';
-const categoryColor = (c: Category | undefined): string =>
-  c ? CATEGORY_COLOR[c] : DEFAULT_COLOR;
 
 interface FileGroup {
   file: string;
@@ -174,7 +171,7 @@ function StepCard({
       data-category={e.category ?? 'none'}
       open
     >
-      <summary style={{ borderLeft: `4px solid ${categoryColor(e.category)}` }}>
+      <summary>
         <span className="step-title">
           <span className="step-name">{e.name}</span>
           <a
@@ -191,11 +188,7 @@ function StepCard({
         <span className="summary-meta">
           {/* category as text + color (not color-only) for accessibility */}
           {e.category && (
-            <span
-              className="cat-tag"
-              data-category={e.category}
-              style={{ color: categoryColor(e.category) }}
-            >
+            <span className="cat-tag" data-category={e.category}>
               {e.category}
             </span>
           )}
