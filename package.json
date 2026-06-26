@@ -17,8 +17,7 @@
     "eval": "tsx packages/cli/src/eval.ts",
     "serve": "tsx packages/server/src/main.ts",
     "golden-update": "tsx scripts/golden-update.ts",
-    "new-fixture": "tsx scripts/new-fixture.ts",
-    "status": "tsx scripts/status.ts"
+    "new-fixture": "tsx scripts/new-fixture.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
