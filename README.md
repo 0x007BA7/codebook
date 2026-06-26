@@ -11,7 +11,7 @@ been extremely useful for me, so I hope you like it.
 
 ![codebook in action](docs/media/codebook_demo.gif)
 
-_the original PR is [here](https://github.com/networkx/networkx/pull/8406/changes). Note how much longer it takes to understand the PR_
+_That's [networkx PR #8406](https://github.com/networkx/networkx/pull/8406/files) — try reading the same change on GitHub and notice how much harder it is to follow._
 
 ## How it works
 
