@@ -11,6 +11,20 @@ The reading order is a **deterministic topological sort** of the PR's dependency
 graph (Tarjan SCC → condensation → Kahn with a priority tiebreak). No LLM, no
 randomness — the same PR always produces the same plan.
 
+## Requirements
+
+| Tool | Needed for | Install |
+|---|---|---|
+| **Node.js 20+** + **npm** | running codebook (and the installer uses them) | [nodejs.org](https://nodejs.org) · `brew install node` |
+| **git** | everything except the built-in `--fixture` examples (repo root, diffs, PR worktrees) | usually preinstalled · `brew install git` |
+| **sem** | real diffs / PRs / `--tree` — the diff + dependency-graph backend | `curl -fsSL https://raw.githubusercontent.com/Ataraxy-Labs/sem/main/install.sh \| sh` · `brew install sem-cli` · `npm i -g @ataraxy-labs/sem` |
+| **gh** (GitHub CLI) | **only** the `codebook <PR-number>` form | [cli.github.com](https://cli.github.com), then `gh auth login` |
+
+`node` + `npm` + `git` are the baseline; `sem` is required for anything beyond
+the bundled examples; `gh` is needed *only* to review a PR by number. codebook
+checks for each tool when it actually needs it and tells you exactly what's
+missing (e.g. `--working` never asks for `gh`).
+
 ## Quick start
 
 ```bash
