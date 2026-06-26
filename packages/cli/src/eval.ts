@@ -155,7 +155,7 @@ function renderReport(
         `<section id="${name}"><h2>${name}</h2><div class="app">${html}</div></section>`,
     )
     .join('\n');
-  return `<!doctype html><html><head><meta charset="utf-8"><title>PR Linearizer — eval</title>
+  return `<!doctype html><html><head><meta charset="utf-8"><title>Codebook — eval</title>
 <style>${css}
 body{padding:24px;max-width:1000px;margin:0 auto;}
 table{border-collapse:collapse;width:100%;font-size:13px;margin:16px 0;}
@@ -168,7 +168,7 @@ th:first-child,td:first-child{text-align:left;}
 section{border-top:1px solid var(--line);margin-top:28px;padding-top:8px;}
 .totals{font-weight:600;}
 </style></head><body>
-<h1>PR Linearizer — eval report</h1>
+<h1>Codebook — eval report</h1>
 ${legend}
 <p class="totals">totals: ${card.totals.passed}/${card.totals.fixtures} fixtures passed · determinism: ${badge(card.determinismCheck)}</p>
 <table><thead><tr><th>fixture</th><th>ent</th><th>cl</th><th>cyc</th><th>back</th>

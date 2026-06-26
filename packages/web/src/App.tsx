@@ -39,7 +39,7 @@ export function App(): ReactElement {
   return (
     <div className="app">
       <header className="topbar">
-        <h1>PR Linearizer</h1>
+        <h1>Codebook</h1>
         <label>
           fixture{' '}
           <select value={fixture} onChange={(e) => setFixture(e.target.value)}>

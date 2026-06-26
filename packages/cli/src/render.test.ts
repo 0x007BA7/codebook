@@ -22,6 +22,15 @@ function renderInDom(fixture: string) {
   return { plan, dom, doc: dom.window.document, errors };
 }
 
+describe('renderPlanHtml escaping', () => {
+  it('escapes a hostile title (e.g. a malicious branch name) — no injected markup', () => {
+    const plan = linearize(loadFixtureInput('rate-limit'));
+    const html = renderPlanHtml(plan, '<img src=x onerror=alert(1)>');
+    expect(html).not.toContain('<img src=x onerror=alert(1)>');
+    expect(html).toContain('&lt;img src=x onerror=alert(1)&gt;');
+  });
+});
+
 describe('renderPlanHtml standalone interactions (jsdom)', () => {
   it('runs the injected script with no errors and injects the settings dropdown', () => {
     const { doc, errors } = renderInDom('rate-limit');

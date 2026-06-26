@@ -1,4 +1,6 @@
 import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import {
   parseGraphInput,
   type GraphInput,
@@ -42,6 +44,14 @@ export interface SemDiff {
 
 /** `sem graph --json` shape (the fields we use). */
 export interface SemGraph {
+  entities?: Array<{
+    id: string;
+    name: string;
+    entityType: string;
+    filePath: string;
+    startLine: number;
+    endLine: number;
+  }>;
   edges: Array<{ fromEntity: string; toEntity: string; refType: string }>;
 }
 
@@ -163,6 +173,32 @@ function hunkFromChange(c: SemDiff['changes'][number]): Hunk {
  * dependency edges come from the graph. Core drops edges whose endpoints fall
  * outside C, so passing the full graph is correct.
  */
+/**
+ * Map a sem entityType to our coarse kind. `orphan` (module-level import blocks)
+ * is dropped (returns null); anything else we don't explicitly know maps to
+ * `const` rather than being silently discarded.
+ */
+/**
+ * Does a repo-root-relative `filePath` fall under a user-supplied scope `path`?
+ * Handles the scope being given relative to a sub-cwd (suffix match) as well as
+ * a directory (prefix / contained match).
+ */
+function underPath(filePath: string, scope: string): boolean {
+  const s = scope.replace(/\/+$/, '');
+  return (
+    filePath === s ||
+    filePath.endsWith('/' + s) || // file given relative to a sub-cwd
+    filePath.startsWith(s + '/') || // dir at the repo root
+    filePath.includes('/' + s + '/') // dir nested under a prefix
+  );
+}
+
+function kindFor(entityType: string): EntityKind | null {
+  const t = entityType.toLowerCase();
+  if (t === 'orphan' || t === 'module' || t === '') return null;
+  return KIND_MAP[t] ?? 'const';
+}
+
 export function normalizeSemOutput(
   diff: SemDiff,
   graph: SemGraph,
@@ -170,8 +206,8 @@ export function normalizeSemOutput(
 ): GraphInput {
   const entities: Entity[] = [];
   for (const c of diff.changes) {
-    const kind = KIND_MAP[c.entityType.toLowerCase()];
-    if (!kind) continue; // drop `orphan`/unmappable module-level noise
+    const kind = kindFor(c.entityType);
+    if (!kind) continue; // drop `orphan`/module-level noise
     entities.push({
       id: c.entityId,
       name: c.entityName,
@@ -189,6 +225,51 @@ export function normalizeSemOutput(
     rel: REL_MAP[e.refType.toLowerCase()] ?? 'calls',
   }));
 
+  return parseGraphInput({ schemaVersion: 1, pr, entities, edges });
+}
+
+/**
+ * Whole-tree view (no diff): turn `sem graph` entities+edges into a GraphInput,
+ * reading each entity's source via `slice(filePath, startLine, endLine)`. Every
+ * entity is "added" and its body is shown as neutral context (it's not a change,
+ * it's a read-through of the code in dependency order).
+ */
+export function normalizeSemGraph(
+  graph: SemGraph,
+  slice: (filePath: string, startLine: number, endLine: number) => string,
+  pr: { repo: string; base: string; head: string },
+): GraphInput {
+  const entities: Entity[] = [];
+  for (const g of graph.entities ?? []) {
+    const kind = kindFor(g.entityType);
+    if (!kind) continue;
+    const body = slice(g.filePath, g.startLine, g.endLine);
+    const lineCount = body === '' ? 0 : body.split('\n').length;
+    entities.push({
+      id: g.id,
+      name: g.name,
+      file: g.filePath,
+      kind,
+      change: 'added',
+      category: categoryFor(g.filePath),
+      // body has no +/- prefixes -> rendered as neutral context (a read-through)
+      hunks: [
+        {
+          file: g.filePath,
+          startLine: Math.max(1, g.startLine),
+          endLine: Math.max(Math.max(1, g.startLine), g.endLine),
+          added: lineCount,
+          removed: 0,
+          ...(body ? { patch: body } : {}),
+        },
+      ],
+    });
+  }
+  const edges: Edge[] = graph.edges.map((e) => ({
+    from: e.fromEntity,
+    to: e.toEntity,
+    rel: REL_MAP[e.refType.toLowerCase()] ?? 'calls',
+  }));
   return parseGraphInput({ schemaVersion: 1, pr, entities, edges });
 }
 
@@ -229,6 +310,60 @@ export class SemIngestor implements Ingestor {
       });
       return JSON.parse(out);
     };
+
+    // Whole-tree view (no diff): read the dependency graph of a path and show
+    // each entity's source in dependency order. Reads file content ourselves
+    // since `sem graph` carries line ranges but not code.
+    if (opts.scope === 'tree') {
+      const path = opts.path && opts.path.length > 0 ? opts.path : '.';
+      // `sem graph`'s path arg selects the REPO, not a sub-scope — it returns the
+      // whole repo's graph, so we filter to the requested path ourselves.
+      const graph = run(['graph', '--json', cwd]) as SemGraph;
+      let ents = graph.entities ?? [];
+      if (path !== '.') {
+        ents = ents.filter((e) => underPath(e.filePath, path));
+        if (ents.length === 0) {
+          throw new Error(
+            `tree view: no entities matched "${path}". Use a repo-relative path (e.g. app/models/x.rb).`,
+          );
+        }
+      }
+      const cap = opts.treeCap === undefined ? 4000 : opts.treeCap;
+      if (cap > 0 && ents.length > cap) {
+        throw new Error(
+          `tree view: ${ents.length} entities under "${path}" exceeds the ${cap} cap.\n` +
+            `Narrow the path (e.g. a package/dir), or raise it with --max <n> (0 = no cap).\n` +
+            `(Heads up: ~${ents.length} entities renders to roughly ${Math.round((ents.length / 15600) * 380)} MB of HTML.)`,
+        );
+      }
+      // sem paths are repo-root-relative; read content from the git root, not cwd.
+      let root = cwd;
+      try {
+        root =
+          execFileSync('git', ['rev-parse', '--show-toplevel'], { cwd, encoding: 'utf8' }).trim() ||
+          cwd;
+      } catch {
+        /* not a git repo / git missing — fall back to cwd */
+      }
+      const fileCache = new Map<string, string[]>();
+      const slice = (filePath: string, startLine: number, endLine: number): string => {
+        let lines = fileCache.get(filePath);
+        if (!lines) {
+          try {
+            lines = readFileSync(join(root, filePath), 'utf8').split('\n');
+          } catch {
+            lines = [];
+          }
+          fileCache.set(filePath, lines);
+        }
+        return lines.slice(Math.max(0, startLine - 1), endLine).join('\n');
+      };
+      return normalizeSemGraph({ entities: ents, edges: graph.edges }, slice, {
+        repo,
+        base: '(tree)',
+        head: path,
+      });
+    }
 
     // Working-tree review: diff against HEAD (or staged) instead of a ref range.
     const diffArgs =
