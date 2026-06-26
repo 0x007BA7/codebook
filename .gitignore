@@ -8,6 +8,9 @@ eval/scorecard.json
 .vite/
 test-results/
 
+# local working notes (not committed)
+/NOTES.md
+
 # local PR-review outputs + scratch checkouts (never part of this repo)
 /*.html
 /biocurator/

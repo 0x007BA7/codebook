@@ -10,7 +10,7 @@ import {
   type ChangeKind,
   type Rel,
   type Hunk,
-} from '@prl/contracts';
+} from '@codebook/contracts';
 import { SemUnavailableError, type Ingestor, type IngestOpts } from './types.js';
 
 // ---------------------------------------------------------------------------
@@ -136,8 +136,25 @@ function categoryFor(filePath: string): 'logic' | 'config' | 'test' | 'wiring' {
   return 'logic';
 }
 
-function countLines(s: string): number {
-  return s.length === 0 ? 0 : s.split('\n').length;
+function toLines(s: string): string[] {
+  return s === '' ? [] : s.split('\n');
+}
+/**
+ * LCS length of two line sequences. Deterministic (the length is independent of
+ * any tiebreak), O(m·n) — fine for function-sized bodies. Mirrors the LCS in
+ * `@codebook/web`'s linediff.ts; duplicated here so `ingest` doesn't import `web`
+ * (which would break the package boundary, §11.6).
+ */
+function lcsLength(a: string[], b: string[]): number {
+  const m = a.length;
+  const n = b.length;
+  const dp: Int32Array[] = Array.from({ length: m + 1 }, () => new Int32Array(n + 1));
+  for (let i = m - 1; i >= 0; i--) {
+    for (let j = n - 1; j >= 0; j--) {
+      dp[i]![j] = a[i] === b[j] ? dp[i + 1]![j + 1]! + 1 : Math.max(dp[i + 1]![j]!, dp[i]![j + 1]!);
+    }
+  }
+  return dp[0]![0]!;
 }
 function prefixLines(s: string, sign: '+' | '-'): string {
   return s
@@ -150,8 +167,15 @@ function prefixLines(s: string, sign: '+' | '-'): string {
 function hunkFromChange(c: SemDiff['changes'][number]): Hunk {
   const before = c.beforeContent ?? '';
   const after = c.afterContent ?? '';
-  const added = countLines(after);
-  const removed = countLines(before);
+  // Count only the lines that actually changed (GitHub-style), not the whole
+  // body: removed = old lines absent from the LCS, added = new lines absent from
+  // it. The patch below still stacks old then new; the renderer's own LCS
+  // reconstructs changed-vs-unchanged lines for display.
+  const beforeL = toLines(before);
+  const afterL = toLines(after);
+  const lcs = lcsLength(beforeL, afterL);
+  const removed = beforeL.length - lcs;
+  const added = afterL.length - lcs;
   const start = c.startLine ?? c.oldStartLine ?? 1;
   const end = c.endLine ?? c.oldEndLine ?? start;
   const parts: string[] = [];

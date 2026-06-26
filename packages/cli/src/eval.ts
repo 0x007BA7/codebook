@@ -8,10 +8,10 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { linearize, stableStringify, checkLaws, type LawResult } from '@prl/core';
-import { listFixtures, loadFixtureInput, FIXTURES_ROOT } from '@prl/ingest';
-import type { GraphInput, ReadingPlan } from '@prl/contracts';
-import { Spine, Legend } from '@prl/web/Spine';
+import { linearize, stableStringify, checkLaws, type LawResult } from '@codebook/core';
+import { listFixtures, loadFixtureInput, FIXTURES_ROOT } from '@codebook/ingest';
+import type { GraphInput, ReadingPlan } from '@codebook/contracts';
+import { Spine, Legend } from '@codebook/web/Spine';
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const evalDir = join(repoRoot, 'eval');

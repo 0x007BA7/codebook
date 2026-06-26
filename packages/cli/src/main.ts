@@ -1,19 +1,19 @@
 #!/usr/bin/env node
 /**
  * Thin CLI over ingest + core (§15). Dogfooding and scripting.
- *   prl fixtures
- *   prl plan --fixture rate-limit
- *   prl plan --repo . --base main --head HEAD --ingestor sem
+ *   codebook fixtures
+ *   codebook plan --fixture rate-limit
+ *   codebook plan --repo . --base main --head HEAD --ingestor sem
  */
 import { writeFileSync } from 'node:fs';
-import { linearize, stableStringify } from '@prl/core';
+import { linearize, stableStringify } from '@codebook/core';
 import {
   FixtureIngestor,
   SemIngestor,
   SemUnavailableError,
   listFixtures,
   type Ingestor,
-} from '@prl/ingest';
+} from '@codebook/ingest';
 import { renderPlanHtml } from './render.js';
 import { runWatch } from './watch.js';
 
@@ -40,12 +40,12 @@ async function main(): Promise<void> {
   if (!cmd || cmd === 'help') {
     console.log(
       'usage:\n' +
-        '  prl fixtures\n' +
-        '  prl plan   --fixture <name>\n' +
-        '  prl plan   --repo <dir> --base <ref> --head <ref> [--ingestor sem|fixture]\n' +
-        '  prl plan|render --repo <dir> --working|--staged   (local changes, no refs)\n' +
-        '  prl render --repo <dir> --base <ref> --head <ref> --ingestor sem [--out plan.html]\n' +
-        '  prl render --fixture <name> [--out plan.html]',
+        '  codebook fixtures\n' +
+        '  codebook plan   --fixture <name>\n' +
+        '  codebook plan   --repo <dir> --base <ref> --head <ref> [--ingestor sem|fixture]\n' +
+        '  codebook plan|render --repo <dir> --working|--staged   (local changes, no refs)\n' +
+        '  codebook render --repo <dir> --base <ref> --head <ref> --ingestor sem [--out plan.html]\n' +
+        '  codebook render --fixture <name> [--out plan.html]',
     );
     return;
   }

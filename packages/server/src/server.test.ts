@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import type { FastifyInstance } from 'fastify';
-import { ReadingPlanSchema } from '@prl/contracts';
+import { ReadingPlanSchema } from '@codebook/contracts';
 import { buildApp } from './app.js';
 
 let app: FastifyInstance;

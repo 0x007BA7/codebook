@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import type { GraphInput } from '@prl/contracts';
+import type { GraphInput } from '@codebook/contracts';
 import { linearize } from './linearize.js';
 import { checkLaws } from './invariants.js';
 

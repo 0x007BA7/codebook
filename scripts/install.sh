@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
-# Symlink `prl-review` onto the PATH so it can be run from any repo.
-# Pick the first writable, sensible bin dir; fall back to ~/.local/bin.
+# Symlink `codebook` (and a short `cb` alias) onto the PATH so it can be run
+# from any repo. Pick the first writable, sensible bin dir; fall back to ~/.local/bin.
 set -euo pipefail
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SRC="$PROJECT_DIR/pr-spine.sh"
-NAME="prl-review"
+SRC="$PROJECT_DIR/bin/codebook"
 
 chmod +x "$SRC"
 
@@ -19,13 +18,13 @@ pick_bindir() {
 
 BINDIR="$(pick_bindir)"
 mkdir -p "$BINDIR"
-DEST="$BINDIR/$NAME"
-
-ln -sf "$SRC" "$DEST"
-echo "installed: $DEST -> $SRC"
+ln -sf "$SRC" "$BINDIR/codebook"
+ln -sf "$SRC" "$BINDIR/cb"
+echo "installed: $BINDIR/codebook (and 'cb' alias) -> $SRC"
 
 case ":$PATH:" in
-  *":$BINDIR:"*) echo "ready: run 'prl-review <PR-number>' from inside any cloned repo." ;;
+  *":$BINDIR:"*) echo "ready: run 'codebook <PR-number>' (or 'cb …') from inside any cloned repo." ;;
   *) echo "NOTE: $BINDIR is not on your PATH. Add this to your shell profile:"
-     echo "      export PATH=\"$BINDIR:\$PATH\"" ;;
+     echo "      export PATH=\"$BINDIR:\$PATH\""
+     exit 1 ;;
 esac

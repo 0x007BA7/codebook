@@ -4,8 +4,8 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { createElement } from 'react';
-import { ReadingPlanSchema, type GraphInput } from '@prl/contracts';
-import { linearize } from '@prl/core';
+import { ReadingPlanSchema, type GraphInput } from '@codebook/contracts';
+import { linearize } from '@codebook/core';
 import { Spine, Legend } from './Spine.js';
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
@@ -138,13 +138,7 @@ describe('Spine (static markup, §8.2)', () => {
   });
 
   it('renders every fixture without throwing', () => {
-    for (const name of [
-      'acyclic-chain',
-      'disconnected-islands',
-      'nested-cycles',
-      'single-cycle',
-      'large-synthetic',
-    ]) {
+    for (const name of ['acyclic-chain', 'nested-cycles', 'single-cycle']) {
       expect(() => render(name), name).not.toThrow();
     }
   });

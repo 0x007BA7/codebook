@@ -1,5 +1,5 @@
 {
-  "name": "@prl/ingest",
+  "name": "@codebook/ingest",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -7,7 +7,7 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@prl/contracts": "*",
-    "@prl/core": "*"
+    "@codebook/contracts": "*",
+    "@codebook/core": "*"
   }
 }

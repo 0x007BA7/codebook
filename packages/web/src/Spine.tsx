@@ -3,7 +3,7 @@
 // (Vite/Vitest). Without it, classic-runtime renders fail: "React is not defined".
 import * as React from 'react';
 import type { ReactElement } from 'react';
-import type { ReadingPlan, ReadingStep, Cluster, Category } from '@prl/contracts';
+import type { ReadingPlan, ReadingStep, Cluster, Category } from '@codebook/contracts';
 import { parsePatch, diffLines, splitRows, type DiffOp } from './linediff.js';
 import { highlightLines, langFor, type Seg } from './highlight.js';
 
@@ -26,9 +26,6 @@ const CATEGORY_COLOR: Record<Category, string> = {
   test: '#6a3a8a',
   wiring: '#1f5d8a',
 };
-const DEFAULT_COLOR = '#555';
-const categoryColor = (c: Category | undefined): string =>
-  c ? CATEGORY_COLOR[c] : DEFAULT_COLOR;
 
 interface FileGroup {
   file: string;
@@ -149,11 +146,13 @@ function StepCard({
   cluster,
   nameOf,
   orderOf,
+  showFile,
 }: {
   step: ReadingStep;
   cluster: Cluster | undefined;
   nameOf: Map<string, string>;
   orderOf: Map<string, number>;
+  showFile?: boolean;
 }): ReactElement {
   const e = step.entity;
   const added = e.hunks.reduce((n, h) => n + h.added, 0);
@@ -172,7 +171,7 @@ function StepCard({
       data-category={e.category ?? 'none'}
       open
     >
-      <summary style={{ borderLeft: `4px solid ${categoryColor(e.category)}` }}>
+      <summary>
         <span className="step-title">
           <span className="step-name">{e.name}</span>
           <a
@@ -183,14 +182,24 @@ function StepCard({
           >
             ↗
           </a>
+          {/* show the file inline when this is a single-entity file (no file header) */}
+          {showFile && <span className="step-file">{e.file}</span>}
         </span>
-        {cluster && cluster.isCycle && (
-          <span className="cycle-badge" data-cycle-rel={cluster.cycleRel} title={`read together with ${coMembers.join(', ')}`}>
-            ↻ {cluster.cycleRel}
+        <span className="summary-meta">
+          {/* category as text + color (not color-only) for accessibility */}
+          {e.category && (
+            <span className="cat-tag" data-category={e.category}>
+              {e.category}
+            </span>
+          )}
+          {cluster && cluster.isCycle && (
+            <span className="cycle-badge" data-cycle-rel={cluster.cycleRel} title={`read together with ${coMembers.join(', ')}`}>
+              ↻ {cluster.cycleRel}
+            </span>
+          )}
+          <span className="step-delta">
+            <span className="add">+{added}</span> <span className="del">−{removed}</span>
           </span>
-        )}
-        <span className="step-delta">
-          <span className="add">+{added}</span> <span className="del">−{removed}</span>
         </span>
       </summary>
 
@@ -278,37 +287,44 @@ export function Spine({ plan }: { plan: ReadingPlan }): ReactElement {
   return (
     <div className="spine" data-step-count={plan.steps.length} data-layout="by-file">
       <div className="steps">
-        {groups.map((g) => (
-          <div
-            className="file-group"
-            key={g.file}
-            data-file={g.file}
-            data-fanout={g.fanout}
-            data-blast={g.blast}
-          >
-            <div className="file-head">
-              <span className="file-name">{g.file}</span>
-              <span className="file-count">
-                {g.steps.length} {g.steps.length === 1 ? 'entity' : 'entities'}
-              </span>
-            </div>
-            {g.steps.map((s) => (
-              <div className="step-row" key={s.order}>
-                <div className="gutter">
-                  <span className="step-num" aria-label={`step ${s.order}`}>
-                    {s.order}
-                  </span>
+        {groups.map((g) => {
+          // A heavyweight file header per single-entity file just doubles the
+          // visual noise — only show it for multi-entity files; otherwise the
+          // filename rides inline on the one card.
+          const single = g.steps.length === 1;
+          return (
+            <div
+              className="file-group"
+              key={g.file}
+              data-file={g.file}
+              data-fanout={g.fanout}
+              data-blast={g.blast}
+            >
+              {!single && (
+                <div className="file-head">
+                  <span className="file-name">{g.file}</span>
+                  <span className="file-count">{g.steps.length} entities</span>
                 </div>
-                <StepCard
-                  step={s}
-                  cluster={clusterByIndex.get(s.clusterIndex)}
-                  nameOf={nameOf}
-                  orderOf={orderOf}
-                />
-              </div>
-            ))}
-          </div>
-        ))}
+              )}
+              {g.steps.map((s) => (
+                <div className="step-row" key={s.order}>
+                  <div className="gutter">
+                    <span className="step-num" aria-label={`step ${s.order}`}>
+                      {s.order}
+                    </span>
+                  </div>
+                  <StepCard
+                    step={s}
+                    cluster={clusterByIndex.get(s.clusterIndex)}
+                    nameOf={nameOf}
+                    orderOf={orderOf}
+                    showFile={single}
+                  />
+                </div>
+              ))}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

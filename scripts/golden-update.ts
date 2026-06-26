@@ -5,8 +5,8 @@
  */
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { linearize, stableStringify } from '@prl/core';
-import { listFixtures, loadFixtureInput, FIXTURES_ROOT } from '@prl/ingest';
+import { linearize, stableStringify } from '@codebook/core';
+import { listFixtures, loadFixtureInput, FIXTURES_ROOT } from '@codebook/ingest';
 
 const only = process.argv[2]; // optional single fixture name
 const names = (only ? [only] : listFixtures()).sort();

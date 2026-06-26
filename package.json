@@ -17,9 +17,7 @@
     "eval": "tsx packages/cli/src/eval.ts",
     "serve": "tsx packages/server/src/main.ts",
     "golden-update": "tsx scripts/golden-update.ts",
-    "new-fixture": "tsx scripts/new-fixture.ts",
-    "gen-large": "tsx scripts/gen-large.ts",
-    "status": "tsx scripts/status.ts"
+    "new-fixture": "tsx scripts/new-fixture.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
@@ -34,7 +32,6 @@
     "eslint": "^9.17.0",
     "fast-check": "^3.23.1",
     "jsdom": "^25.0.1",
-    "tsx": "^4.19.2",
     "typescript": "^5.7.2",
     "vite": "^6.0.3",
     "vitest": "^2.1.8"
@@ -44,6 +41,7 @@
     "prismjs": "^1.29.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "tsx": "^4.19.2",
     "zod": "^3.24.1"
   }
 }

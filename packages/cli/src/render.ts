@@ -3,9 +3,9 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import type { ReadingPlan } from '@prl/contracts';
-import { Spine, Legend } from '@prl/web/Spine';
-import { initSpinePopdowns } from '@prl/web/popdown';
+import type { ReadingPlan } from '@codebook/contracts';
+import { Spine, Legend } from '@codebook/web/Spine';
+import { initSpinePopdowns } from '@codebook/web/popdown';
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 

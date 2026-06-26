@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { JSDOM, VirtualConsole } from 'jsdom';
-import { linearize } from '@prl/core';
-import { loadFixtureInput } from '@prl/ingest';
+import { linearize } from '@codebook/core';
+import { loadFixtureInput } from '@codebook/ingest';
 import { renderPlanHtml } from './render.js';
 
 // Renders a fixture plan to standalone HTML and runs its injected script in a
@@ -43,7 +43,7 @@ describe('renderPlanHtml standalone interactions (jsdom)', () => {
   });
 
   it('default ranks file groups by fan-out desc; switching ranks by blast desc', () => {
-    const { dom, doc } = renderInDom('large-synthetic');
+    const { dom, doc } = renderInDom('rate-limit');
     const metric = (attr: string) =>
       [...doc.querySelectorAll('.steps > .file-group')].map((g) =>
         parseInt(g.getAttribute(attr) || '0', 10),

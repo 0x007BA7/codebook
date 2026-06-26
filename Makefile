@@ -1,8 +1,8 @@
 # Codebook — single source of truth for the build/test loop (§13.2).
 # Every target exits nonzero on failure so the agent loop can read exit codes.
 .DEFAULT_GOAL := help
-.PHONY: help setup install uninstall build typecheck lint test e2e verify eval serve demo \
-        golden-update new-fixture gen-large status clean
+.PHONY: help setup install uninstall build typecheck lint test verify eval serve demo \
+        golden-update new-fixture clean
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -11,16 +11,18 @@ help: ## Show this help
 setup: ## Install dependencies
 	npm install
 
-install: setup ## Install deps + put `prl-review` on your PATH (run PRs from any repo)
+install: setup ## Install deps + put `codebook` (and `cb`) on your PATH
 	bash scripts/install.sh
 
-uninstall: ## Remove the `prl-review` symlink from your PATH
+uninstall: ## Remove the `codebook`/`cb` symlinks from your PATH
 	@for d in /usr/local/bin /opt/homebrew/bin "$$HOME/.local/bin" "$$PREFIX"; do \
-	  [ -L "$$d/prl-review" ] && rm -f "$$d/prl-review" && echo "removed $$d/prl-review"; \
+	  for n in codebook cb; do \
+	    [ -L "$$d/$$n" ] && rm -f "$$d/$$n" && echo "removed $$d/$$n"; \
+	  done; \
 	done; true
 
 build: ## Build the web app (other packages run from TS source via tsx/vitest)
-	npm run build --workspace @prl/web
+	npm run build --workspace @codebook/web
 
 typecheck: ## tsc --noEmit across every package (per-package lib isolation)
 	node scripts/typecheck.mjs
@@ -31,9 +33,6 @@ lint: ## eslint + the §11.6 dependency-cruiser boundary check
 
 test: ## All Vitest unit/property/golden/contract/spine tests (no network)
 	npx vitest run
-
-e2e: ## Spine render smoke (static markup; browser-driven Playwright deferred)
-	npx vitest run packages/web
 
 verify: ## THE LOOP GATE: typecheck && lint && test. Exits nonzero on any failure.
 	$(MAKE) typecheck
@@ -54,12 +53,6 @@ golden-update: ## Regenerate every fixture's expected.plan.json (review the diff
 
 new-fixture: ## Scaffold a fixture: make new-fixture name=foo
 	npx tsx scripts/new-fixture.ts $(name)
-
-gen-large: ## Regenerate the seeded large-synthetic fixture input
-	npx tsx scripts/gen-large.ts
-
-status: ## Regenerate STATUS.md by running the milestone smoke checks
-	npx tsx scripts/status.ts
 
 clean: ## Remove build artifacts
 	rm -rf packages/web/dist eval/report.html eval/scorecard.json test-results

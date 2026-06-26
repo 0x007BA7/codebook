@@ -26,7 +26,7 @@ console.log('demo: starting API server on :' + API_PORT + ' …');
 run('npx', ['tsx', 'packages/server/src/main.ts'], { PORT: API_PORT });
 
 console.log('demo: starting web dev server on :5173 …');
-run('npm', ['run', 'dev', '--workspace', '@prl/web'], { API_TARGET: `http://127.0.0.1:${API_PORT}` });
+run('npm', ['run', 'dev', '--workspace', '@codebook/web'], { API_TARGET: `http://127.0.0.1:${API_PORT}` });
 
 // Give the dev server a moment, then open the browser (best-effort).
 setTimeout(() => {

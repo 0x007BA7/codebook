@@ -372,6 +372,21 @@ export function initSpinePopdowns(): void {
       rb.checked = rb.value === (split ? 'split' : 'unified');
     }
     document.body.classList.toggle('prl-split', split); // CSS picks unified vs side-by-side
+
+    let theme = 'dark';
+    try {
+      theme = localStorage.getItem('prl-theme') || 'dark';
+    } catch (_e) {
+      /* ignore */
+    }
+    const themeR = document.querySelectorAll('input[name="prl-theme"]');
+    for (let i = 0; i < themeR.length; i++) {
+      const rb = themeR[i] as HTMLInputElement;
+      rb.checked = rb.value === theme;
+    }
+    // dark is the base palette -> no attribute; light/auto are opt-in overrides
+    if (theme === 'dark') document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme', theme);
   }
   if (!document.getElementById('prl-settings') && spine.parentNode) {
     const panel = document.createElement('details');
@@ -391,8 +406,28 @@ export function initSpinePopdowns(): void {
       '<label><input type="radio" name="prl-diff" value="split"> side-by-side</label></div>' +
       '<div class="prl-setting"><span class="prl-setting-label">Main panel</span>' +
       '<label><input type="checkbox" id="prl-hide-reviewed"> hide reviewed steps</label></div>' +
+      '<div class="prl-setting"><span class="prl-setting-label">Theme</span>' +
+      '<label><input type="radio" name="prl-theme" value="dark"> dark</label>' +
+      '<label><input type="radio" name="prl-theme" value="light"> light</label>' +
+      '<label><input type="radio" name="prl-theme" value="auto"> auto</label></div>' +
       '</div>';
     spine.parentNode.insertBefore(panel, spine);
+
+    const themeRadios = panel.querySelectorAll('input[name="prl-theme"]');
+    for (let i = 0; i < themeRadios.length; i++) {
+      const r = themeRadios[i];
+      if (!r) continue;
+      r.addEventListener('change', function (this: HTMLInputElement) {
+        if (!this.checked) return;
+        try {
+          localStorage.setItem('prl-theme', this.value);
+        } catch (_e) {
+          /* ignore */
+        }
+        if (this.value === 'dark') document.documentElement.removeAttribute('data-theme');
+        else document.documentElement.setAttribute('data-theme', this.value);
+      });
+    }
 
     const diffRadios = panel.querySelectorAll('input[name="prl-diff"]');
     for (let i = 0; i < diffRadios.length; i++) {
