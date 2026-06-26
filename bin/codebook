@@ -173,7 +173,7 @@ if [ -z "$SCOPE" ] && [ -n "$PR" ]; then
   cleanup_wt() { git -C "$ORIG_REPO" worktree remove --force "$WT" >/dev/null 2>&1 || true; }
   trap cleanup_wt EXIT
   REPO="$WT"
-  OUT="${OUT:-${TMPDIR:-/tmp}/prl-pr-$PR.html}"
+  OUT="${OUT:-${TMPDIR:-/tmp}/codebook-pr-$PR.html}"
   echo "==> PR #$PR: base $BASE_LABEL (${BASE:0:9}) .. head ${HEAD_OID:0:9}"
   echo "    (first run on a large repo can take ~a minute while sem indexes the worktree)"
 fi
@@ -197,7 +197,9 @@ if [ -z "$SCOPE" ] && [ -z "$BASE" ]; then
   fi
 fi
 
-OUT="${OUT:-$REPO/codebook-spine.html}"
+# Default output goes to a temp file (don't litter the repo being reviewed);
+# pass --out <file> to keep it. PR mode already set a temp OUT above.
+OUT="${OUT:-${TMPDIR:-/tmp}/codebook-$(basename "$REPO")-${SCOPE:-review}.html}"
 # Mode-specific args (scope / refs / title), shared by render and watch.
 ARGS=(--repo "$REPO" --ingestor sem)
 if [ "$SCOPE" = "tree" ]; then
