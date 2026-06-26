@@ -1,71 +1,76 @@
 /* Flat design (no gradients/shadows, §15). Sans-serif chrome, mono only for
    code. Fully tokenized for light + dark (auto via prefers-color-scheme, or
    forced via :root[data-theme]). */
+/* DARK is the default palette (soft charcoal, not black). Light + auto are
+   opt-in via :root[data-theme]; auto follows the OS. Base = dark means the
+   standalone HTML is dark with no flash and no JS required. */
 :root {
   --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
 
-  --bg: #fbfbfa;
-  --surface: #ffffff;
-  --surface-2: #f5f6f8;
-  --fg: #21262c;
-  --muted: #59636e;
-  --line: #e3e6ea;
-  --rail: #d4dadf;
+  --bg: #1b1f27;          /* soft dark slate, not black */
+  --surface: #232934;
+  --surface-2: #171b22;
+  --fg: #e6edf3;
+  --muted: #9aa4b0;
+  --line: #313845;
+  --rail: #3d4655;
 
-  --accent: #4b56c4;      /* interaction (links/focus) — NOT a category hue */
-  --accent-soft: #ececfb;
+  --accent: #8a93f0;      /* interaction (links/focus) — NOT a category hue */
+  --accent-soft: #272d3c;
 
-  --add: #1a7f37;
-  --del: #cf222e;
-  --add-bg: #e8fcef;
-  --del-bg: #ffece9;
-  --flash: #fff3bf;
+  --add: #3fb950;
+  --del: #f85149;
+  --add-bg: rgba(63, 185, 80, 0.15);
+  --del-bg: rgba(248, 81, 73, 0.15);
+  --flash: #3c3514;
 
   /* prism tokens */
-  --t-comment: #5a6168;
-  --t-punct: #57606a;
-  --t-keyword: #cf222e;
-  --t-op: #0550ae;
-  --t-string: #0a3069;
-  --t-number: #0550ae;
-  --t-func: #8250df;
-  --t-prop: #116329;
-  --t-deco: #953800;
+  --t-comment: #9aa4b0;
+  --t-punct: #c9d1d9;
+  --t-keyword: #ff7b72;
+  --t-op: #79c0ff;
+  --t-string: #a5d6ff;
+  --t-number: #79c0ff;
+  --t-func: #d2a8ff;
+  --t-prop: #7ee787;
+  --t-deco: #ffa657;
 
   /* category accents */
-  --cat-logic: #2f6f4f;
-  --cat-config: #8a6d1f;
-  --cat-test: #6a3a8a;
-  --cat-wiring: #1f5d8a;
-  --cat-cycle: #6a3a8a;
+  --cat-logic: #56b886;
+  --cat-config: #d4a72c;
+  --cat-test: #b083d9;
+  --cat-wiring: #58a6ff;
+  --cat-cycle: #b083d9;
 
-  color-scheme: light dark;
+  color-scheme: dark;
   font-family: var(--sans);
 }
 
-/* --- dark palette (shared by auto-dark and the explicit toggle) --- */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #0e1117; --surface: #161b22; --surface-2: #0d1117;
-    --fg: #e6edf3; --muted: #8b949e; --line: #2a313c; --rail: #3a424e;
-    --accent: #8a93f0; --accent-soft: #1d2233;
-    --add: #3fb950; --del: #f85149; --add-bg: rgba(63,185,80,.14); --del-bg: rgba(248,81,73,.14);
-    --flash: #3c3514;
-    --t-comment: #8b949e; --t-punct: #c9d1d9; --t-keyword: #ff7b72; --t-op: #79c0ff;
-    --t-string: #a5d6ff; --t-number: #79c0ff; --t-func: #d2a8ff; --t-prop: #7ee787; --t-deco: #ffa657;
-    --cat-logic: #56b886; --cat-config: #d4a72c; --cat-test: #b083d9; --cat-wiring: #58a6ff; --cat-cycle: #b083d9;
-  }
+/* --- light palette (shared by the explicit toggle and OS-light "auto") --- */
+:root[data-theme="light"],
+:root[data-theme="auto"] {
+  color-scheme: light;
 }
-:root[data-theme="dark"] {
-  --bg: #0e1117; --surface: #161b22; --surface-2: #0d1117;
-  --fg: #e6edf3; --muted: #8b949e; --line: #2a313c; --rail: #3a424e;
-  --accent: #8a93f0; --accent-soft: #1d2233;
-  --add: #3fb950; --del: #f85149; --add-bg: rgba(63,185,80,.14); --del-bg: rgba(248,81,73,.14);
-  --flash: #3c3514;
-  --t-comment: #8b949e; --t-punct: #c9d1d9; --t-keyword: #ff7b72; --t-op: #79c0ff;
-  --t-string: #a5d6ff; --t-number: #79c0ff; --t-func: #d2a8ff; --t-prop: #7ee787; --t-deco: #ffa657;
-  --cat-logic: #56b886; --cat-config: #d4a72c; --cat-test: #b083d9; --cat-wiring: #58a6ff; --cat-cycle: #b083d9;
+:root[data-theme="light"] {
+  --bg: #fbfbfa; --surface: #ffffff; --surface-2: #f5f6f8;
+  --fg: #21262c; --muted: #59636e; --line: #e3e6ea; --rail: #d4dadf;
+  --accent: #4b56c4; --accent-soft: #ececfb;
+  --add: #1a7f37; --del: #cf222e; --add-bg: #e8fcef; --del-bg: #ffece9; --flash: #fff3bf;
+  --t-comment: #5a6168; --t-punct: #57606a; --t-keyword: #cf222e; --t-op: #0550ae;
+  --t-string: #0a3069; --t-number: #0550ae; --t-func: #8250df; --t-prop: #116329; --t-deco: #953800;
+  --cat-logic: #2f6f4f; --cat-config: #8a6d1f; --cat-test: #6a3a8a; --cat-wiring: #1f5d8a; --cat-cycle: #6a3a8a;
+}
+@media (prefers-color-scheme: light) {
+  :root[data-theme="auto"] {
+    --bg: #fbfbfa; --surface: #ffffff; --surface-2: #f5f6f8;
+    --fg: #21262c; --muted: #59636e; --line: #e3e6ea; --rail: #d4dadf;
+    --accent: #4b56c4; --accent-soft: #ececfb;
+    --add: #1a7f37; --del: #cf222e; --add-bg: #e8fcef; --del-bg: #ffece9; --flash: #fff3bf;
+    --t-comment: #5a6168; --t-punct: #57606a; --t-keyword: #cf222e; --t-op: #0550ae;
+    --t-string: #0a3069; --t-number: #0550ae; --t-func: #8250df; --t-prop: #116329; --t-deco: #953800;
+    --cat-logic: #2f6f4f; --cat-config: #8a6d1f; --cat-test: #6a3a8a; --cat-wiring: #1f5d8a; --cat-cycle: #6a3a8a;
+  }
 }
 
 * { box-sizing: border-box; }

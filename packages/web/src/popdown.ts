@@ -373,9 +373,9 @@ export function initSpinePopdowns(): void {
     }
     document.body.classList.toggle('prl-split', split); // CSS picks unified vs side-by-side
 
-    let theme = 'auto';
+    let theme = 'dark';
     try {
-      theme = localStorage.getItem('prl-theme') || 'auto';
+      theme = localStorage.getItem('prl-theme') || 'dark';
     } catch (_e) {
       /* ignore */
     }
@@ -384,8 +384,8 @@ export function initSpinePopdowns(): void {
       const rb = themeR[i] as HTMLInputElement;
       rb.checked = rb.value === theme;
     }
-    // auto -> no attribute (let prefers-color-scheme decide); else force it
-    if (theme === 'auto') document.documentElement.removeAttribute('data-theme');
+    // dark is the base palette -> no attribute; light/auto are opt-in overrides
+    if (theme === 'dark') document.documentElement.removeAttribute('data-theme');
     else document.documentElement.setAttribute('data-theme', theme);
   }
   if (!document.getElementById('prl-settings') && spine.parentNode) {
@@ -407,9 +407,9 @@ export function initSpinePopdowns(): void {
       '<div class="prl-setting"><span class="prl-setting-label">Main panel</span>' +
       '<label><input type="checkbox" id="prl-hide-reviewed"> hide reviewed steps</label></div>' +
       '<div class="prl-setting"><span class="prl-setting-label">Theme</span>' +
-      '<label><input type="radio" name="prl-theme" value="auto"> auto</label>' +
+      '<label><input type="radio" name="prl-theme" value="dark"> dark</label>' +
       '<label><input type="radio" name="prl-theme" value="light"> light</label>' +
-      '<label><input type="radio" name="prl-theme" value="dark"> dark</label></div>' +
+      '<label><input type="radio" name="prl-theme" value="auto"> auto</label></div>' +
       '</div>';
     spine.parentNode.insertBefore(panel, spine);
 
@@ -424,7 +424,7 @@ export function initSpinePopdowns(): void {
         } catch (_e) {
           /* ignore */
         }
-        if (this.value === 'auto') document.documentElement.removeAttribute('data-theme');
+        if (this.value === 'dark') document.documentElement.removeAttribute('data-theme');
         else document.documentElement.setAttribute('data-theme', this.value);
       });
     }
