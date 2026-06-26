@@ -55,7 +55,7 @@ missing (e.g. `--working` never asks for `gh`).
 one of two lenses. **Fan-out** (default) puts files that depend on the most
 first — this tends to surface tests, a quick way to see how data flows. **Blast
 radius** puts the files that the most other code depends on first — this surfaces
-load-bearing code, but can over-promote small helper functions.
+load-bearing code, but can over-emphasize small helper functions.
 
 <!-- SCREENSHOT (optional): the Settings panel open with the fan-out vs
      blast-radius toggle — ideally a side-by-side or short GIF showing the file
@@ -76,9 +76,9 @@ it (`cb` is a built-in short alias for `codebook`):
 ```bash
 cd ~/projects/my-app
 codebook --working    # your uncommitted changes (no commit, PR, or gh needed)
-codebook              # the current branch vs its base
+cb              # the current branch vs its base
 cb 1234               # `cb` == `codebook`; review GitHub PR #1234 (needs gh)
-codebook --tree src   # read a whole package in dependency order (no diff)
+cb --tree src   # read a whole package in dependency order (no diff)
 ```
 
 It linearizes the change and opens the reading spine in your browser. That's the
@@ -88,10 +88,12 @@ whole loop — see [Usage](#usage) for every form and flag.
 must already be present. It clones into `~/.local/share/codebook`, installs
 runtime deps with `npm ci --omit=dev` (~37 MB, all prebuilt — **no compile
 step**), and symlinks `codebook`/`cb` into `~/.local/bin`. Re-running updates in
-place; pin a ref with `CODEBOOK_REF=<branch|tag|sha>`. From a clone, `make
-install` does the same. Uninstall with `rm -rf ~/.local/share/codebook
-~/.local/bin/codebook ~/.local/bin/cb`. No `sem` yet? `codebook --fixture
-rate-limit` shows the UI on a bundled example, offline.</sub>
+place; pin a ref with `CODEBOOK_REF=<branch|tag|sha>`. Uninstall with `rm -rf
+~/.local/share/codebook ~/.local/bin/codebook ~/.local/bin/cb`. Already have a
+clone? Skip the curl line and run `make install` in it instead — that leaves the
+source in your clone and just symlinks `codebook`/`cb` onto your PATH (no
+`~/.local/share` copy). No `sem` yet? `codebook --fixture rate-limit` shows the
+UI on a bundled example, offline.</sub>
 
 ## Usage
 
@@ -99,21 +101,27 @@ Run `codebook` (or the short `cb` alias) from inside any git checkout. Every for
 
 ```bash
 codebook 1234                       # a GitHub PR by number (reads the base from GitHub)
-codebook --working                  # uncommitted changes vs HEAD — no PR/gh
-codebook --staged                   # only staged changes
-codebook --working --watch          # live-reload server: re-renders as you edit
-codebook --tree [path]              # a whole dir/package in dependency order (no diff)
-codebook                            # current branch vs its base (no PR #)
-codebook --base origin/main --head HEAD
-codebook <repo-dir>                 # a checkout elsewhere
-codebook --fixture rate-limit       # built-in example, no sem/gh needed
-codebook 1234 --out review.html     # write the HTML to a file instead of a temp file
+cb --working                  # uncommitted changes vs HEAD — no PR/gh
+cb --staged                   # only staged changes
+cb --working --watch          # live-reload server: re-renders as you edit
+cb --tree [path]              # a whole dir/package in dependency order (no diff)
+cb                            # current branch vs its base (no PR #)
+cb --base origin/main --head HEAD
+cb <repo-dir>                 # a checkout elsewhere
+cb --fixture rate-limit       # built-in example, no sem/gh needed
+cb 1234 --out review.html     # write the HTML to a file instead of a temp file
 ```
 
 For the PR-number form, `codebook` reads the PR's base from GitHub, diffs
 `merge-base..HEAD`, linearizes, and opens the spine. `--working`/`--staged`
 review your local changes with no commit, PR, or `gh` — and they're fast on
 re-runs since `sem`'s index stays warm in your repo.
+
+**Where the output goes:** by default the spine is written to a temp file
+(`$TMPDIR/codebook-<repo>-<scope>.html` — on macOS that's under `/var/folders/…`,
+which the OS purges periodically) and opened in your browser. Pass `--out
+<file>` to write it somewhere you'll keep, or `--no-open` to just write the file
+without launching a browser.
 
 <details>
 <summary>How it talks to <code>sem</code>, and what it reads</summary>
