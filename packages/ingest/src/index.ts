@@ -11,6 +11,7 @@ export {
   SemIngestor,
   isSemAvailable,
   normalizeSemOutput,
+  normalizeSemGraph,
   type SemDiff,
   type SemGraph,
 } from './sem.js';

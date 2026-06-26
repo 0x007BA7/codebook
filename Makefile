@@ -1,4 +1,4 @@
-# PR Linearizer — single source of truth for the build/test loop (§13.2).
+# Codebook — single source of truth for the build/test loop (§13.2).
 # Every target exits nonzero on failure so the agent loop can read exit codes.
 .DEFAULT_GOAL := help
 .PHONY: help setup install uninstall build typecheck lint test e2e verify eval serve demo \

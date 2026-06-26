@@ -10,11 +10,16 @@ export interface IngestOpts {
   /** Working directory of the checkout (SemIngestor). */
   cwd?: string;
   /**
-   * Diff the local working tree instead of a base..head ref range (SemIngestor):
-   * "working" = all uncommitted changes vs HEAD, "staged" = staged changes only.
-   * When set, base/head are ignored.
+   * Alternate ingest modes (SemIngestor); when set, base/head are ignored.
+   *  - "working": all uncommitted changes vs HEAD
+   *  - "staged":  staged changes only
+   *  - "tree":    whole-entity-set read-through of a path (no diff), see `path`
    */
-  scope?: 'working' | 'staged';
+  scope?: 'working' | 'staged' | 'tree';
+  /** Path to scope a "tree" view to (file or dir, relative to the repo). */
+  path?: string;
+  /** Max entities for a "tree" view before refusing (default 4000; 0 = no cap). */
+  treeCap?: number;
 }
 
 /**

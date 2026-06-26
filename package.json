@@ -1,8 +1,12 @@
 {
-  "name": "pr-linearizer",
+  "name": "codebook",
   "version": "1.0.0",
   "private": true,
+  "license": "MIT",
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "workspaces": [
     "packages/*"
   ],

@@ -11,6 +11,8 @@
 #   prl-review                   # review the current branch vs its base (no PR #)
 #   prl-review --working         # review your uncommitted changes (vs HEAD), no gh
 #   prl-review --staged          # review only staged changes
+#   prl-review --tree [PATH]     # read a whole dir/package in dependency order (no diff)
+#   prl-review --working --watch # live-reloading server; re-renders as you edit
 #   prl-review --base origin/main --head HEAD
 #   prl-review <repo-dir> [--base <ref>] [--head <ref>]
 #   prl-review --fixture rate-limit   # built-in example, no sem/gh needed
@@ -44,7 +46,7 @@ resolve_ref() {
 }
 
 # --- parse args -------------------------------------------------------------
-PR="" REPO="" FIXTURE="" BASE="" HEAD="HEAD" OUT="" NO_OPEN="" SCOPE=""
+PR="" REPO="" FIXTURE="" BASE="" HEAD="HEAD" OUT="" NO_OPEN="" SCOPE="" WATCH="" MAXENT=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --fixture) FIXTURE="${2:-}"; shift 2;;
@@ -53,6 +55,9 @@ while [ $# -gt 0 ]; do
     --out)     OUT="${2:-}"; shift 2;;
     --working) SCOPE="working"; shift;;
     --staged)  SCOPE="staged"; shift;;
+    --tree)    SCOPE="tree"; shift;;
+    --max)     MAXENT="${2:-}"; shift 2;;
+    --watch)   WATCH=1; shift;;
     --no-open) NO_OPEN=1; shift;;
     -h|--help) sed -n '2,30p' "$0"; exit 0;;
     -*)        die "unknown flag: $1";;
@@ -62,12 +67,18 @@ while [ $# -gt 0 ]; do
   esac
 done
 
+# In tree mode the positional is the PATH to read, not a repo dir.
+TREE_PATH="."
+if [ "$SCOPE" = "tree" ]; then TREE_PATH="${REPO:-.}"; REPO=""; fi
+
 # relative --out resolves against the dir you ran us from
 if [ -n "$OUT" ]; then case "$OUT" in /*) ;; *) OUT="$INVOKE_DIR/$OUT";; esac; fi
 
 # --- prerequisites ----------------------------------------------------------
-command -v node >/dev/null 2>&1 || die "node not found. Install Node.js 18+."
+command -v node >/dev/null 2>&1 || die "node not found. Install Node.js 20+."
 command -v npm  >/dev/null 2>&1 || die "npm not found."
+NODE_MAJOR="$(node -p 'process.versions.node.split(".")[0]' 2>/dev/null || echo 0)"
+[ "$NODE_MAJOR" -ge 20 ] 2>/dev/null || echo "warning: Node $NODE_MAJOR detected; 20+ recommended (--watch needs recursive fs.watch)." >&2
 if [ ! -d "$PROJECT_DIR/node_modules" ]; then
   echo "==> installing prl-linearizer dependencies (first run)…"
   ( cd "$PROJECT_DIR" && npm install )
@@ -159,14 +170,26 @@ if [ -z "$SCOPE" ] && [ -z "$BASE" ]; then
 fi
 
 OUT="${OUT:-$REPO/pr-spine.html}"
-RENDER_ARGS=(render --repo "$REPO" --ingestor sem --out "$OUT")
-if [ -n "$SCOPE" ]; then
+# Mode-specific args (scope / refs / title), shared by render and watch.
+ARGS=(--repo "$REPO" --ingestor sem)
+if [ "$SCOPE" = "tree" ]; then
+  echo "==> reading code tree under '$TREE_PATH' in $REPO via sem…"
+  ARGS+=(--tree --path "$TREE_PATH" --title "tree: $TREE_PATH")
+  [ -n "$MAXENT" ] && ARGS+=(--max "$MAXENT")
+elif [ -n "$SCOPE" ]; then
   echo "==> reviewing local $SCOPE changes in $REPO via sem…"
-  RENDER_ARGS+=("--$SCOPE" --title "local: $SCOPE changes")
+  ARGS+=("--$SCOPE" --title "local: $SCOPE changes")
 else
   echo "==> linearizing $REPO  ($BASE..$HEAD) via sem…"
-  RENDER_ARGS+=(--base "$BASE" --head "$HEAD")
-  [ -n "$PR" ] && RENDER_ARGS+=(--title "PR #$PR — ${HEAD_BRANCH:-head}")
+  ARGS+=(--base "$BASE" --head "$HEAD")
+  [ -n "$PR" ] && ARGS+=(--title "PR #$PR — ${HEAD_BRANCH:-head}")
 fi
-( cd "$PROJECT_DIR" && SEM_NO_TELEMETRY=1 npx tsx "$CLI" "${RENDER_ARGS[@]}" )
-[ -n "$NO_OPEN" ] || { echo "==> opening $OUT"; opener "$OUT"; }
+
+if [ -n "$WATCH" ]; then
+  # live-reload server; re-renders on file change. Best with --working/--staged/--tree.
+  [ -n "$NO_OPEN" ] && ARGS+=(--no-open)
+  ( cd "$PROJECT_DIR" && SEM_NO_TELEMETRY=1 npx tsx "$CLI" watch "${ARGS[@]}" )
+else
+  ( cd "$PROJECT_DIR" && SEM_NO_TELEMETRY=1 npx tsx "$CLI" render --out "$OUT" "${ARGS[@]}" )
+  [ -n "$NO_OPEN" ] || { echo "==> opening $OUT"; opener "$OUT"; }
+fi

@@ -7,7 +7,7 @@ const app = buildApp();
 app
   .listen({ port, host })
   .then((addr) => {
-    console.log(`PR Linearizer API listening on ${addr}`);
+    console.log(`Codebook API listening on ${addr}`);
     console.log(`  GET  ${addr}/api/health`);
     console.log(`  GET  ${addr}/api/reading-plan?fixture=rate-limit`);
     console.log(`  POST ${addr}/api/reading-plan  { fixture | repo,base,head, ingestor? }`);

@@ -1,6 +1,7 @@
-# PR Linearizer
+# Codebook
 
-Turn a large pull request into a single, sensible **reading order** — a linear
+Turn a large pull request — or your local changes, or a whole package — into a
+single, sensible **reading order** — a linear
 sequence of changed code entities where every dependency is read before the
 thing that depends on it. A 2000-line diff becomes something you read top to
 bottom instead of jumping around. Cycles (mutual recursion, circular imports)
@@ -92,6 +93,8 @@ linearizes, and opens the spine. Other forms:
 ```bash
 prl-review --working                  # review your uncommitted changes (vs HEAD) — no PR/gh
 prl-review --staged                   # review only staged changes
+prl-review --working --watch          # live-reload server: re-renders as you edit
+prl-review --tree [path]              # read a whole dir/package in dependency order (no diff)
 prl-review                            # review the current branch vs its base (no PR #)
 prl-review --base origin/main --head HEAD
 prl-review <repo-dir>                 # review a checkout elsewhere

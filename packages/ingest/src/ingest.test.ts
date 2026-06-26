@@ -170,4 +170,33 @@ describe('SemIngestor availability gate + integration (§11.5)', () => {
     expect(names).toContain('::g'); // the uncommitted new function is included
     expect(g.pr.head).toBe('working tree');
   });
+
+  it.runIf(semHere)('whole-tree view reads entity source in dependency order', async () => {
+    const { mkdtempSync, writeFileSync: wf } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const { execFileSync } = await import('node:child_process');
+    const dir = mkdtempSync(join(tmpdir(), 'prl-tree-'));
+    const git = (...a: string[]) => execFileSync('git', a, { cwd: dir, stdio: 'ignore' });
+    git('init', '-q');
+    git('config', 'user.email', 't@t.co');
+    git('config', 'user.name', 't');
+    // total() calls clamp() -> clamp must read before total
+    wf(join(dir, 'm.py'), 'def clamp(n):\n    return max(0, n)\n\ndef total(xs):\n    return clamp(sum(xs))\n');
+    git('add', '-A');
+    git('commit', '-qm', 'init');
+
+    const g = await new SemIngestor().ingest({ cwd: dir, repo: dir, scope: 'tree' });
+    expect(() => parseGraphInput(g)).not.toThrow();
+    expect(g.entities.length).toBeGreaterThanOrEqual(2);
+    // every entity is "added" and carries its source as patch text
+    const total = g.entities.find((e) => e.id.endsWith('::total'))!;
+    expect(total.change).toBe('added');
+    expect(total.hunks[0]!.patch).toContain('clamp(sum(xs))');
+    // the call edge was captured, so the plan orders clamp before total
+    const plan = linearize(g);
+    const order = plan.steps.map((s) => s.entity.id);
+    const ci = order.findIndex((id) => id.endsWith('::clamp'));
+    const ti = order.findIndex((id) => id.endsWith('::total'));
+    expect(ci).toBeLessThan(ti);
+  });
 });
