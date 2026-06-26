@@ -9,13 +9,7 @@ Codebook structures a diff into a more logical reading order, and allows you to
 click through and understand the connection between the entities better. It's 
 been extremely useful for me, so I hope you like it. 
 
-<!-- ┌─ HERO GIF (the most important asset — put it right here) ────────────────
-     A ~10–15s loop of a real PR opening in codebook: the reading spine renders,
-     you scroll top-to-bottom, expand a step to reveal its diff, then click a
-     "depends on" link to pop the dependency preview. Captures the whole value
-     prop in motion. ~1000px wide. e.g.:
-     ![codebook in action](docs/media/hero.gif)
-     ──────────────────────────────────────────────────────────────────────── -->
+![codebook in action](docs/media/codebook_demo.gif)
 
 ## How it works
 
@@ -31,11 +25,6 @@ tree-sitter can resolve: it misses what it can't see statically — dynamic
 dispatch, runtime wiring, reflection, framework "magic" (e.g. Rails-style
 associations) often produce no edge at all. Treat the reading order as a strong
 hint, not ground truth.
-
-<!-- SCREENSHOT: a static shot of a rendered spine on a real diff — the
-     file-grouped, dependency-ordered list with step numbers, a cycle-cluster
-     badge, and a "depends on" link visible. Annotated arrows optional. ~1000px.
-     e.g. ![reading spine](docs/media/spine.png) -->
 
 ## Requirements
 
@@ -57,9 +46,7 @@ first — this tends to surface tests, a quick way to see how data flows. **Blas
 radius** puts the files that the most other code depends on first — this surfaces
 load-bearing code, but can over-emphasize small helper functions.
 
-<!-- SCREENSHOT (optional): the Settings panel open with the fan-out vs
-     blast-radius toggle — ideally a side-by-side or short GIF showing the file
-     order change when you flip it. e.g. ![ranking modes](docs/media/ranking.png) -->
+![ranking modes](docs/media/settings.png)
 
 ## Quick start
 
