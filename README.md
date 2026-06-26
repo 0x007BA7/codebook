@@ -11,6 +11,8 @@ been extremely useful for me, so I hope you like it.
 
 ![codebook in action](docs/media/codebook_demo.gif)
 
+_the original PR is [here](https://github.com/networkx/networkx/pull/8406/changes). Note how much longer it takes to understand the PR_
+
 ## How it works
 
 Codebook uses [`sem`](https://github.com/Ataraxy-Labs/sem) (tree-sitter under the
@@ -24,7 +26,7 @@ Because it's built on static analysis, codebook is only as good as what
 tree-sitter can resolve: it misses what it can't see statically — dynamic
 dispatch, runtime wiring, reflection, framework "magic" (e.g. Rails-style
 associations) often produce no edge at all. Treat the reading order as a strong
-hint, not ground truth.
+hint, not the ground truth.
 
 ## Requirements
 
