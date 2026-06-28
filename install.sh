@@ -2,7 +2,7 @@
 #
 # codebook installer.  Run:
 #
-#     curl -fsSL https://raw.githubusercontent.com/rzlim08/codebook/main/install.sh | bash
+#     curl -fsSL https://raw.githubusercontent.com/0x007BA7/codebook/main/install.sh | bash
 #
 # What it does (no compilation, no root):
 #   1. checks for git, node >= 20, npm (does NOT install them — see the hints)
@@ -24,7 +24,7 @@
 set -euo pipefail
 
 main() {
-  REPO_URL="${CODEBOOK_REPO:-https://github.com/rzlim08/codebook.git}"
+  REPO_URL="${CODEBOOK_REPO:-https://github.com/0x007BA7/codebook.git}"
   REF="${CODEBOOK_REF:-main}"
   HOME_DIR="${CODEBOOK_HOME:-${XDG_DATA_HOME:-$HOME/.local/share}/codebook}"
   BIN_DIR="${CODEBOOK_BIN_DIR:-$HOME/.local/bin}"

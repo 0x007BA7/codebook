@@ -56,7 +56,7 @@ Install it (needs `git`, `node` 20+, `npm`, and `sem` for real diffs — see
 [Requirements](#requirements)):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/rzlim08/codebook/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/0x007BA7/codebook/main/install.sh | bash
 ```
 
 Then point it at **your own code** — `cd` into any repo on your machine and run
