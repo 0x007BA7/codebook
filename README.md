@@ -11,7 +11,7 @@ been extremely useful for me, so I hope you like it.
 
 ![codebook in action](docs/media/codebook_demo.gif)
 
-_Try reading the same PR on Github [networkx PR #8406](https://github.com/networkx/networkx/pull/8406/files) _
+_Try reading the same PR on Github [networkx PR #8406](https://github.com/networkx/networkx/pull/8406/files)_
 
 ## How it works
 
