@@ -29,9 +29,12 @@ hint, not the ground truth.
 
 ## Quick start
 
-Install it (needs `git`, `node` 20+, `npm`, and `sem` for real diffs — see
+Install it (needs `git`, `node` 20+, `npm`, and `sem` — see
 [Requirements](#requirements)):
 
+```bash
+curl -fsSL https://raw.githubusercontent.com/Ataraxy-Labs/sem/main/install.sh | sh # for `sem`
+```
 ```bash
 curl -fsSL https://raw.githubusercontent.com/0x007BA7/codebook/main/install.sh | bash
 ```
