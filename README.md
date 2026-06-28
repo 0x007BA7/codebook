@@ -1,9 +1,8 @@
 # Codebook
 
-We're all drowning in AI generated code nowadays. The default review flow in 
-tools like github sort files alphabetically and by folder structure. This means
-that when reviewing a large diff, you end up reading a bunch of irrelevant code
-first. 
+We're (or at least I am) drowning in AI generated code. Reviewing PRs by scrolling 
+through massive diffs isn't practical anymore. We need a more effective way to 
+identify the important changes instead of trying to read everything line by line.
 
 Codebook structures a diff into a more logical reading order, and allows you to
 click through and understand the connection between the entities better. It's 
@@ -28,28 +27,6 @@ dispatch, runtime wiring, reflection, framework "magic" (e.g. Rails-style
 associations) often produce no edge at all. Treat the reading order as a strong
 hint, not the ground truth.
 
-## Requirements
-
-| Tool | Needed for | Install |
-|---|---|---|
-| **Node.js 20+** + **npm** | running codebook (and the installer uses them) | [nodejs.org](https://nodejs.org) · `brew install node` |
-| **git** | everything except the built-in `--fixture` examples (repo root, diffs, PR worktrees) | usually preinstalled · `brew install git` |
-| **sem** | real diffs / PRs / `--tree` — the diff + dependency-graph backend | `curl -fsSL https://raw.githubusercontent.com/Ataraxy-Labs/sem/main/install.sh \| sh` · `brew install sem-cli` · `npm i -g @ataraxy-labs/sem` |
-| **gh** (GitHub CLI) | **only** the `codebook <PR-number>` form | [cli.github.com](https://cli.github.com), then `gh auth login` |
-
-`node` + `npm` + `git` are the baseline; `sem` is required for anything beyond
-the bundled examples; `gh` is needed *only* to review a PR by number. codebook
-checks for each tool when it actually needs it and tells you exactly what's
-missing (e.g. `--working` never asks for `gh`).
-
-**Ranking (Settings panel):** within the dependency order, file groups sort by
-one of two lenses. **Fan-out** (default) puts files that depend on the most
-first — this tends to surface tests, a quick way to see how data flows. **Blast
-radius** puts the files that the most other code depends on first — this surfaces
-load-bearing code, but can over-emphasize small helper functions.
-
-![ranking modes](docs/media/settings.png)
-
 ## Quick start
 
 Install it (needs `git`, `node` 20+, `npm`, and `sem` for real diffs — see
@@ -73,16 +50,27 @@ cb --tree src   # read a whole package in dependency order (no diff)
 It linearizes the change and opens the reading spine in your browser. That's the
 whole loop — see [Usage](#usage) for every form and flag.
 
-<sub>**Installer details:** it won't install a toolchain — `git`/`node` 20+/`npm`
-must already be present. It clones into `~/.local/share/codebook`, installs
-runtime deps with `npm ci --omit=dev` (~37 MB, all prebuilt — **no compile
-step**), and symlinks `codebook`/`cb` into `~/.local/bin`. Re-running updates in
-place; pin a ref with `CODEBOOK_REF=<branch|tag|sha>`. Uninstall with `rm -rf
-~/.local/share/codebook ~/.local/bin/codebook ~/.local/bin/cb`. Already have a
-clone? Skip the curl line and run `make install` in it instead — that leaves the
-source in your clone and just symlinks `codebook`/`cb` onto your PATH (no
-`~/.local/share` copy). No `sem` yet? `codebook --fixture rate-limit` shows the
-UI on a bundled example, offline.</sub>
+## Requirements
+
+| Tool | Needed for | Install |
+|---|---|---|
+| **Node.js 20+** + **npm** | running codebook (and the installer uses them) | Install [nvm](https://github.com/nvm-sh/nvm) · `nvm install --lts` |
+| **git** | everything except the built-in `--fixture` examples (repo root, diffs, PR worktrees) | usually preinstalled · `brew install git`/`sudo apt-get install git` |
+| **sem** | real diffs / PRs / `--tree` — the diff + dependency-graph backend | `curl -fsSL https://raw.githubusercontent.com/Ataraxy-Labs/sem/main/install.sh \| sh` · `brew install sem-cli` · `npm i -g @ataraxy-labs/sem` |
+| **gh** (GitHub CLI) | **only** the `codebook <PR-number>` form | [cli.github.com](https://cli.github.com), then `gh auth login` |
+
+`node` + `npm` + `git` are the baseline; `sem` is required for anything beyond
+the bundled examples; `gh` is needed *only* to review a PR by number. codebook
+checks for each tool when it actually needs it and tells you exactly what's
+missing (e.g. `--working` never asks for `gh`).
+
+**Ranking (Settings panel):** within the dependency order, file groups sort by
+one of two lenses. **Fan-out** (default) puts files that depend on the most
+first — this tends to surface tests, a quick way to see how data flows. **Blast
+radius** puts the files that the most other code depends on first — this surfaces
+load-bearing code, but can over-emphasize small helper functions.
+
+![ranking modes](docs/media/settings.png)
 
 ## Usage
 
@@ -163,5 +151,6 @@ auto-skip when `sem` isn't installed (so they don't run in that path).
 
 ## Nota Bene
 
-This is a mostly vibecoded project. I've been using it pretty extensively in my own 
-personal work, but it comes with all the hairiness of extensively AI coded projects. 
+This is a mostly vibecoded project (I'm aware of the irony). I've been using it 
+pretty extensively in my own personal work, but it comes with all the hairiness 
+of extensively AI coded projects. 
